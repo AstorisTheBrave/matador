@@ -1,14 +1,10 @@
-import tseslint from '@typescript-eslint/eslint-plugin';
-import tsparser from '@typescript-eslint/parser';
+import tseslint from 'typescript-eslint';
 
-export default [
-  {
-    ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**'],
-  },
+export default tseslint.config(
+  { ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**'] },
   {
     files: ['**/*.ts'],
-    languageOptions: { parser: tsparser, parserOptions: { project: false } },
-    plugins: { '@typescript-eslint': tseslint },
+    languageOptions: { parser: tseslint.parser },
     rules: {
       'no-restricted-properties': [
         'error',
@@ -24,4 +20,4 @@ export default [
     files: ['**/config.ts', '**/*.test.ts', '**/*.bench.ts', 'examples/**'],
     rules: { 'no-restricted-properties': 'off' },
   },
-];
+);
