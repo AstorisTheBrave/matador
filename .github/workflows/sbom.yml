@@ -15,7 +15,9 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm dlx @cyclonedx/cyclonedx-npm@latest --output-file sbom.json
+      - run: pnpm dlx @cyclonedx/cdxgen@latest -o sbom.json -t pnpm
+        env:
+          FETCH_LICENSE: 'false'
       - uses: actions/upload-artifact@v4
         with:
           name: sbom
