@@ -1,0 +1,25 @@
+{
+  "name": "@matador/core",
+  "version": "0.0.0",
+  "description": "Neutral registry and one-line fail-open instrumentation for BullMQ.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup"
+  },
+  "peerDependencies": {
+    "bullmq": ">=5",
+    "ioredis": ">=5"
+  },
+  "devDependencies": {
+    "bullmq": "^5.34.0",
+    "ioredis": "^5.4.0"
+  }
+}
