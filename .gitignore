@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+.env
+.env.*
+sbom.json
+
+# meta / agent files - never commit
+.claude/
+CLAUDE.md
+AGENTS.md
+.mcp.json
+docs/superpowers/
