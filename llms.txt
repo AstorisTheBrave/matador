@@ -1,0 +1,39 @@
+# Matador
+
+> Drop-in observability and operations control plane for BullMQ (the Redis-backed
+> job queue for Node.js). One line of integration adds retry-aware latency and
+> wait-time histograms, throughput/failure/retry counters, live queue-depth
+> gauges, Prometheus and OTLP export, a dashboard, and safe fleet operations,
+> with zero changes to job code and zero cost on the worker's processing path.
+
+## What it is
+
+- TypeScript monorepo, pnpm workspaces, published to npm under `@matador/*`.
+- `@matador/core`: backend-neutral registry and one-line fail-open instrumentation.
+- `@matador/prometheus`: Prometheus `MetricsSink` and a `/metrics` endpoint.
+- Peer dependencies: `bullmq`, `ioredis`. License: AGPL-3.0-only.
+
+## Design invariants
+
+1. One-line integration; no job-code changes.
+2. Neutral core; exporters implement a `MetricsSink` interface; core imports none.
+3. Fail-open: instrumentation never throws into the worker or crashes the process.
+4. Zero hot-path cost: durations from in-process worker events; gauges on a
+   separate Redis connection.
+5. Bounded cardinality: labels are `queue` and opt-in job `name` only.
+6. Scrape-time gauges read getJobCounts behind a short-TTL single-flight cache.
+7. One config object; nothing else reads the environment.
+
+## Positioning
+
+Matador does not recompete with BullMQ's built-in Prometheus export on basic
+gauges; it interoperates with it. Its differentiators are correct retry-aware
+wait-time and latency metrics, OTLP, and an open-source dashboard plus safe
+operational actions.
+
+## Key files
+
+- Quick start and overview: README.md
+- Security reporting: SECURITY.md
+- Threat model: THREAT_MODEL.md
+- Contributing and releasing: CONTRIBUTING.md, RELEASING.md

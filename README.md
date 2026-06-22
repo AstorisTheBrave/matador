@@ -3,8 +3,8 @@
 Drop-in observability and operations control plane for [BullMQ](https://bullmq.io).
 
 Matador instruments your existing BullMQ workers and queues with **one line** and
-exports deep, correct metrics — latency and wait-time histograms, throughput,
-failures, retries, and live queue depth — to Prometheus and OpenTelemetry. It adds
+exports deep, correct metrics - latency and wait-time histograms, throughput,
+failures, retries, and live queue depth - to Prometheus and OpenTelemetry. It adds
 a dashboard, fleet view, and safe operational actions on top, all open source.
 
 > Status: early development. The core instrumentation seam and the Prometheus
@@ -16,7 +16,7 @@ BullMQ now ships a basic Prometheus export, and several exporters expose queue
 counts. Matador is not trying to re-expose gauges. It focuses on what is hard or
 missing:
 
-- **Correct, retry-aware wait-time** — the time a job actually waited before an
+- **Correct, retry-aware wait-time** - the time a job actually waited before an
   attempt started, without the inflation you get from naively subtracting the
   creation timestamp across retries.
 - **Per-attempt processing-latency histograms** (p95/p99), not just per-minute
@@ -27,17 +27,17 @@ missing:
 
 ## Design invariants
 
-1. **One-line integration** — `instrument(worker)` / `instrument(queue)`, zero
+1. **One-line integration** - `instrument(worker)` / `instrument(queue)`, zero
    changes to job code.
-2. **Neutral core, adapter seam** — the core imports no exporter; exporters
+2. **Neutral core, adapter seam** - the core imports no exporter; exporters
    implement a small interface.
-3. **Fail-open** — instrumentation never throws into your worker or crashes the
+3. **Fail-open** - instrumentation never throws into your worker or crashes the
    process; it degrades, your app does not.
-4. **Zero hot-path cost** — durations come from in-process worker events; queue
+4. **Zero hot-path cost** - durations come from in-process worker events; queue
    gauges use a separate Redis connection. No blocking work on the processing path.
-5. **Bounded cardinality** — labels are `queue` and (opt-in) job `name` only.
-6. **Single-flight scrape cache** — many scrapers cost one Redis round-trip.
-7. **One config funnel** — kwargs > env > defaults; nothing else reads the env.
+5. **Bounded cardinality** - labels are `queue` and (opt-in) job `name` only.
+6. **Single-flight scrape cache** - many scrapers cost one Redis round-trip.
+7. **One config funnel** - kwargs > env > defaults; nothing else reads the env.
 
 ## Packages
 
@@ -79,6 +79,6 @@ pnpm build && pnpm typecheck && pnpm lint && pnpm test
 
 ## License
 
-AGPL-3.0-only — see [LICENSE](./LICENSE). The network-copyleft clause means if you
+AGPL-3.0-only - see [LICENSE](./LICENSE). The network-copyleft clause means if you
 run a modified Matador as a hosted service, you must make your modified source
 available to its users. Use it freely; don't take it closed-source.

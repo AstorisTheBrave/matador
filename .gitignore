@@ -7,9 +7,11 @@ coverage/
 .env.*
 sbom.json
 
-# meta / agent files - never commit
+# meta / internal docs - never commit (undercover; public docs live in the wiki)
 .claude/
 CLAUDE.md
 AGENTS.md
+MEMORY.md
 .mcp.json
-docs/superpowers/
+archive/
+docs/
