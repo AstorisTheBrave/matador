@@ -1,0 +1,30 @@
+{
+  "name": "@matador/prometheus",
+  "version": "0.0.0",
+  "description": "Prometheus MetricsSink and /metrics endpoint for Matador.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup"
+  },
+  "dependencies": {
+    "prom-client": "^15.1.0"
+  },
+  "peerDependencies": {
+    "@matador/core": "workspace:*",
+    "fastify": ">=4"
+  },
+  "devDependencies": {
+    "@matador/core": "workspace:*",
+    "bullmq": "^5.34.0",
+    "fastify": "^4.28.0",
+    "ioredis": "^5.4.0"
+  }
+}
