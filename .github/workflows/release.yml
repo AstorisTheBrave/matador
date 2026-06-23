@@ -20,6 +20,9 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      # Tokenless publish via npm Trusted Publishing (OIDC). Requires a trusted
+      # publisher configured on npmjs.com for each package (see RELEASING.md), and
+      # npm >= 11.5.1 (shipped with Node 24). Provenance is automatic.
       - uses: changesets/action@v1
         with:
           version: pnpm changeset version
@@ -28,5 +31,3 @@ jobs:
           title: 'chore: version packages'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_CONFIG_PROVENANCE: 'true'
