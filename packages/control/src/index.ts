@@ -9,3 +9,7 @@ export type { ControlState } from './state.js';
 export { StateLock } from './lock.js';
 export { AuditLog } from './audit.js';
 export type { AuditEntry, AuditAction } from './audit.js';
+export { sanitizeFailedJob, clampPageSize, paginate } from './views.js';
+export type { FailedJobView, Page } from './views.js';
+export { QueueController } from './queues.js';
+export type { QueueLike, QueueDetail, QueueControllerOptions } from './queues.js';
