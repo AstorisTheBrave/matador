@@ -3,6 +3,14 @@
   "version": "0.0.0",
   "description": "Neutral registry and one-line fail-open instrumentation for BullMQ.",
   "license": "AGPL-3.0-only",
+  "keywords": ["bullmq", "redis", "observability", "metrics", "prometheus", "opentelemetry", "queue", "monitoring"],
+  "homepage": "https://github.com/AstorisTheBrave/matador#readme",
+  "bugs": "https://github.com/AstorisTheBrave/matador/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AstorisTheBrave/matador.git",
+    "directory": "packages/core"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

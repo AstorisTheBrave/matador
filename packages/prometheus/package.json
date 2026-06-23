@@ -3,6 +3,14 @@
   "version": "0.0.0",
   "description": "Prometheus MetricsSink and /metrics endpoint for Matador.",
   "license": "AGPL-3.0-only",
+  "keywords": ["bullmq", "prometheus", "metrics", "observability", "prom-client", "queue", "monitoring"],
+  "homepage": "https://github.com/AstorisTheBrave/matador#readme",
+  "bugs": "https://github.com/AstorisTheBrave/matador/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AstorisTheBrave/matador.git",
+    "directory": "packages/prometheus"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
