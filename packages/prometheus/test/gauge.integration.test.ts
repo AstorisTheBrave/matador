@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Queue } from 'bullmq';
-import { QueueDepthCollector } from '@matador/core';
+import { QueueDepthCollector } from '@matadormq/core';
 import { PrometheusSink } from '../src/index.js';
 
 const url = process.env.REDIS_URL;

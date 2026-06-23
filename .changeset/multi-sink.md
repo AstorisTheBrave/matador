@@ -1,5 +1,5 @@
 ---
-"@matador/core": minor
+"@matadormq/core": minor
 ---
 
 Add `MultiSink`: fan measurements out to several sinks at once (for example

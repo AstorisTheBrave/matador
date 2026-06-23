@@ -1,5 +1,5 @@
 import { Gauge, Registry } from 'prom-client';
-import { JOB_STATES, type JobLabels, type MetricsSink, type QueueDepthCollector } from '@matador/core';
+import { JOB_STATES, type JobLabels, type MetricsSink, type QueueDepthCollector } from '@matadormq/core';
 import { buildMetrics, type Metrics } from './metrics.js';
 
 const DEFAULT_BUCKETS = [0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10, 30, 60, 300];

@@ -43,19 +43,19 @@ missing:
 
 | Package | Description |
 | --- | --- |
-| `@matador/core` | Neutral registry + one-line fail-open instrumentation. |
-| `@matador/prometheus` | Prometheus `MetricsSink` and `/metrics` endpoint. |
+| `@matadormq/core` | Neutral registry + one-line fail-open instrumentation. |
+| `@matadormq/prometheus` | Prometheus `MetricsSink` and `/metrics` endpoint. |
 
 ## Quick start
 
 ```sh
-pnpm add @matador/core @matador/prometheus
+pnpm add @matadormq/core @matadormq/prometheus
 ```
 
 ```ts
 import { Worker } from 'bullmq';
-import { instrument } from '@matador/core';
-import { PrometheusSink, metricsPlugin } from '@matador/prometheus';
+import { instrument } from '@matadormq/core';
+import { PrometheusSink, metricsPlugin } from '@matadormq/prometheus';
 import Fastify from 'fastify';
 
 const sink = new PrometheusSink();

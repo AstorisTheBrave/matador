@@ -1,5 +1,5 @@
 {
-  "name": "@matador/otlp",
+  "name": "@matadormq/otlp",
   "version": "0.0.0",
   "description": "OpenTelemetry (OTLP) metrics exporter for Matador.",
   "license": "AGPL-3.0-only",
@@ -28,10 +28,10 @@
     "build": "tsup"
   },
   "peerDependencies": {
-    "@matador/core": "workspace:*"
+    "@matadormq/core": "workspace:*"
   },
   "devDependencies": {
-    "@matador/core": "workspace:*",
+    "@matadormq/core": "workspace:*",
     "@types/node": "^26.0.0"
   },
   "dependencies": {

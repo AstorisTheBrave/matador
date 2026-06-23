@@ -8,9 +8,9 @@
 
 ## What it is
 
-- TypeScript monorepo, pnpm workspaces, published to npm under `@matador/*`.
-- `@matador/core`: backend-neutral registry and one-line fail-open instrumentation.
-- `@matador/prometheus`: Prometheus `MetricsSink` and a `/metrics` endpoint.
+- TypeScript monorepo, pnpm workspaces, published to npm under `@matadormq/*`.
+- `@matadormq/core`: backend-neutral registry and one-line fail-open instrumentation.
+- `@matadormq/prometheus`: Prometheus `MetricsSink` and a `/metrics` endpoint.
 - Peer dependencies: `bullmq`, `ioredis`. License: AGPL-3.0-only.
 
 ## Design invariants

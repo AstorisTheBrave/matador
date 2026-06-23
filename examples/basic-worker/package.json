@@ -8,8 +8,8 @@
     "start": "tsx src/index.ts"
   },
   "dependencies": {
-    "@matador/core": "workspace:*",
-    "@matador/prometheus": "workspace:*",
+    "@matadormq/core": "workspace:*",
+    "@matadormq/prometheus": "workspace:*",
     "bullmq": "^5.34.0",
     "fastify": "^5.1.0"
   },

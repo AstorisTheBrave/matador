@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { QueueDepthCollector } from '@matador/core';
+import { QueueDepthCollector } from '@matadormq/core';
 import { PrometheusSink } from '../src/index.js';
 
 describe('attachQueueDepth', () => {

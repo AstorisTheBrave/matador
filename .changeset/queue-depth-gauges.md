@@ -1,6 +1,6 @@
 ---
-"@matador/core": minor
-"@matador/prometheus": minor
+"@matadormq/core": minor
+"@matadormq/prometheus": minor
 ---
 
 Add live queue-depth gauges. `instrument(queue)` registers a queue with a

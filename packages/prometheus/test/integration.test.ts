@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Queue, Worker, type Job } from 'bullmq';
-import { instrument } from '@matador/core';
+import { instrument } from '@matadormq/core';
 import { PrometheusSink } from '../src/index.js';
 
 const url = process.env.REDIS_URL;

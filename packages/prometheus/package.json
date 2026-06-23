@@ -1,5 +1,5 @@
 {
-  "name": "@matador/prometheus",
+  "name": "@matadormq/prometheus",
   "version": "0.0.0",
   "description": "Prometheus MetricsSink and /metrics endpoint for Matador.",
   "license": "AGPL-3.0-only",
@@ -26,11 +26,11 @@
     "prom-client": "^15.1.0"
   },
   "peerDependencies": {
-    "@matador/core": "workspace:*",
+    "@matadormq/core": "workspace:*",
     "fastify": ">=4"
   },
   "devDependencies": {
-    "@matador/core": "workspace:*",
+    "@matadormq/core": "workspace:*",
     "@types/node": "^26.0.0",
     "bullmq": "^5.34.0",
     "fastify": "^5.1.0",

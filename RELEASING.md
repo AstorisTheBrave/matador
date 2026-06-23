@@ -1,7 +1,7 @@
 # Releasing
 
 Matador uses [changesets](https://github.com/changesets/changesets) to version
-and publish the public packages (`@matador/core`, `@matador/prometheus`, and the
+and publish the public packages (`@matadormq/core`, `@matadormq/prometheus`, and the
 exporters/control-plane packages as they land).
 
 ## Flow

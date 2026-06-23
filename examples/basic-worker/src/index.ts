@@ -1,7 +1,7 @@
 import { Queue, Worker } from 'bullmq';
 import Fastify from 'fastify';
-import { instrument } from '@matador/core';
-import { PrometheusSink, metricsPlugin } from '@matador/prometheus';
+import { instrument } from '@matadormq/core';
+import { PrometheusSink, metricsPlugin } from '@matadormq/prometheus';
 
 const connection = { host: '127.0.0.1', port: 6379 };
 const sink = new PrometheusSink();

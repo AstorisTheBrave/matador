@@ -1,8 +1,8 @@
 import { Queue, Worker } from 'bullmq';
 import Fastify from 'fastify';
-import { instrument, MultiSink } from '@matador/core';
-import { PrometheusSink, metricsPlugin } from '@matador/prometheus';
-import { OtlpSink } from '@matador/otlp';
+import { instrument, MultiSink } from '@matadormq/core';
+import { PrometheusSink, metricsPlugin } from '@matadormq/prometheus';
+import { OtlpSink } from '@matadormq/otlp';
 
 const connection = { host: '127.0.0.1', port: 6379 };
 

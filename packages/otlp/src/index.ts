@@ -5,7 +5,7 @@ import {
 } from '@opentelemetry/sdk-metrics';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
 import { resourceFromAttributes } from '@opentelemetry/resources';
-import { safe, type JobLabels, type MetricsSink } from '@matador/core';
+import { safe, type JobLabels, type MetricsSink } from '@matadormq/core';
 import { buildInstruments, type Instruments } from './instruments.js';
 import { resolveEndpoint } from './config.js';
 

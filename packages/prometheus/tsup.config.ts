@@ -5,5 +5,5 @@ export default defineConfig({
   format: ['esm'],
   dts: true,
   clean: true,
-  external: ['@matador/core', 'fastify'],
+  external: ['@matadormq/core', 'fastify'],
 });

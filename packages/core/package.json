@@ -1,5 +1,5 @@
 {
-  "name": "@matador/core",
+  "name": "@matadormq/core",
   "version": "0.0.0",
   "description": "Neutral registry and one-line fail-open instrumentation for BullMQ.",
   "license": "AGPL-3.0-only",
