@@ -5,5 +5,13 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   base: './',
-  build: { outDir: 'dist', emptyOutDir: true },
+  build: { outDir: 'dist', emptyOutDir: true, target: 'es2022' },
+  // Dev convenience: proxy API calls to a locally running control plane.
+  server: {
+    proxy: {
+      '/api': 'http://localhost:4319',
+      '/healthz': 'http://localhost:4319',
+      '/readyz': 'http://localhost:4319',
+    },
+  },
 });
