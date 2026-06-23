@@ -5,6 +5,8 @@ export interface MatadorConfig {
   durationBucketsSeconds: number[];
   /** Max entries in the wait-time LRU used for retry-aware computation. */
   waitTimeLruSize: number;
+  /** TTL in ms for the scrape-time queue-depth single-flight cache (invariant I6). */
+  scrapeCacheTtlMs: number;
 }
 
 export type PartialConfig = Partial<MatadorConfig>;
