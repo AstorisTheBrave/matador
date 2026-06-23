@@ -22,6 +22,11 @@ await app.listen({ port: 3000 });
 // metrics now live at http://localhost:3000/metrics
 
 const queue = new Queue('emails', { connection });
+
+// Expose live queue-depth gauges (waiting/active/delayed/...) at scrape time.
+const queueReg = instrument(queue, { sink });
+sink.attachQueueDepth(queueReg.depthCollector);
+
 await queue.add('send-email', { to: 'a@b.c' });
 
 console.log('Matador example running. Scrape http://localhost:3000/metrics');
