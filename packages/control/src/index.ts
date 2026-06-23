@@ -4,3 +4,8 @@ export { ensureSecureBind, isLoopback, tokenMatches } from './security.js';
 export { KeyedRateLimiter } from './ratelimit.js';
 export type { RateLimiterOptions } from './ratelimit.js';
 export { securityHeaders, sanitizeLogValue } from './http.js';
+export { loadState, saveState, emptyState, SCHEMA_VERSION } from './state.js';
+export type { ControlState } from './state.js';
+export { StateLock } from './lock.js';
+export { AuditLog } from './audit.js';
+export type { AuditEntry, AuditAction } from './audit.js';
