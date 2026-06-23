@@ -68,6 +68,16 @@ metricsPlugin(app, sink); // serves /metrics
 await app.listen({ port: 3000 });
 ```
 
+## Documentation
+
+Full docs are in the [wiki](https://github.com/AstorisTheBrave/matador/wiki):
+[Getting Started](https://github.com/AstorisTheBrave/matador/wiki/Getting-Started),
+[Architecture and Invariants](https://github.com/AstorisTheBrave/matador/wiki/Architecture-and-Invariants),
+[Metrics Reference](https://github.com/AstorisTheBrave/matador/wiki/Metrics-Reference),
+[Configuration](https://github.com/AstorisTheBrave/matador/wiki/Configuration),
+[OTLP](https://github.com/AstorisTheBrave/matador/wiki/OTLP), and
+[Security](https://github.com/AstorisTheBrave/matador/wiki/Security).
+
 ## Development
 
 ```sh
