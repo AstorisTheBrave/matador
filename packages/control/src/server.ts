@@ -1,9 +1,10 @@
 import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from 'fastify';
+import fastifyStatic from '@fastify/static';
 import { Counter, Gauge, Registry } from 'prom-client';
 import type { ControlConfig } from './config.js';
 import type { QueueController } from './queues.js';
 import type { QueueActions } from './actions.js';
-import { securityHeaders } from './http.js';
+import { isApiPath, securityHeaders, SPA_CSP } from './http.js';
 import { KeyedRateLimiter, type RateLimiterOptions } from './ratelimit.js';
 import { tokenMatches } from './security.js';
 import { clampPageSize, paginate } from './views.js';
@@ -15,6 +16,8 @@ export interface ControlDeps {
   /** Redis readiness probe. */
   ping: () => Promise<boolean>;
   rateLimits?: { viewer?: RateLimiterOptions; ops?: RateLimiterOptions };
+  /** Directory of the built dashboard SPA to serve. Omit to run API-only. */
+  staticDir?: string;
 }
 
 const DEFAULT_VIEWER_RL: RateLimiterOptions = { capacity: 120, refillPerSec: 10 };
@@ -57,8 +60,10 @@ export function buildControlApp(config: ControlConfig, deps: ControlDeps): Fasti
   const authOps = (req: FastifyRequest): boolean =>
     !anyToken || tokenMatches(bearer(req), config.opsToken);
 
-  app.addHook('onSend', async (_req, reply, payload) => {
+  app.addHook('onSend', async (req, reply, payload) => {
     for (const [k, v] of Object.entries(securityHeaders())) reply.header(k, v);
+    // The SPA needs to load its own scripts/styles/fonts; the API stays strict.
+    if (!isApiPath(req.url)) reply.header('Content-Security-Policy', SPA_CSP);
     return payload;
   });
 
@@ -132,6 +137,15 @@ export function buildControlApp(config: ControlConfig, deps: ControlDeps): Fasti
       deps.actions.drainDlq(name, 'ops', String((req.body as { confirm?: string } | undefined)?.confirm ?? '')),
     ),
   );
+
+  // Serve the dashboard SPA (open: it carries no data; the API behind it is gated).
+  if (deps.staticDir !== undefined) {
+    void app.register(fastifyStatic, { root: deps.staticDir, wildcard: false });
+    app.setNotFoundHandler((req, reply) => {
+      if (req.method === 'GET' && !isApiPath(req.url)) return reply.sendFile('index.html');
+      return reply.code(404).send({ error: 'not_found' });
+    });
+  }
 
   return app;
 }

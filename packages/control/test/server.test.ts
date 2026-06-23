@@ -1,4 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { buildControlApp, type ControlDeps } from '../src/server.js';
 import { resolveControlConfig, type PartialControlConfig } from '../src/config.js';
 import { ConfirmRequiredError } from '../src/errors.js';
@@ -119,5 +122,34 @@ describe('control server (limits and probes)', () => {
     expect((await down.inject({ method: 'GET', url: '/readyz' })).statusCode).toBe(503);
     expect((await down.inject({ method: 'GET', url: '/metrics' })).body).toContain('matador_subsystem_up 1');
     await down.close();
+  });
+});
+
+describe('control server (static dashboard)', () => {
+  let dir: string | undefined;
+  afterEach(async () => {
+    if (dir) await rm(dir, { recursive: true, force: true });
+    dir = undefined;
+  });
+
+  it('serves the SPA at / with the SPA CSP, and the API CSP stays strict', async () => {
+    dir = await mkdtemp(join(tmpdir(), 'matador-spa-'));
+    await writeFile(join(dir, 'index.html'), '<!doctype html><title>Matador</title>', 'utf8');
+    const app = buildControlApp(cfg(), deps({ staticDir: dir }));
+
+    const spa = await app.inject({ method: 'GET', url: '/' });
+    expect(spa.statusCode).toBe(200);
+    expect(spa.body).toContain('Matador');
+    expect(spa.headers['content-security-policy']).toContain("default-src 'self'");
+
+    // A client-side route falls back to index.html.
+    const route = await app.inject({ method: 'GET', url: '/some/spa/route' });
+    expect(route.statusCode).toBe(200);
+
+    // The JSON API keeps the strict CSP and still works.
+    const api = await app.inject({ method: 'GET', url: '/api/queues' });
+    expect(api.statusCode).toBe(200);
+    expect(api.headers['content-security-policy']).toContain("default-src 'none'");
+    await app.close();
   });
 });

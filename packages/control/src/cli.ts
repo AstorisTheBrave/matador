@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import IORedis from 'ioredis';
 import { Queue } from 'bullmq';
 import { resolveControlConfig, type ControlConfig } from './config.js';
@@ -33,6 +35,7 @@ async function run(): Promise<void> {
 
   const controller = new QueueController(queues, { scrapeCacheTtlMs: 5_000 });
   const actions = new QueueActions(queues, audit);
+  const staticDir = fileURLToPath(new URL('./public', import.meta.url));
   const app = buildControlApp(config, {
     controller,
     actions,
@@ -44,10 +47,12 @@ async function run(): Promise<void> {
         return false;
       }
     },
+    ...(existsSync(staticDir) ? { staticDir } : {}),
   });
 
   await app.listen({ host: config.host, port: config.port });
-  log(`Matador control plane on http://${config.host}:${config.port} (${names.length} queues)`);
+  const ui = existsSync(staticDir) ? ' · dashboard at /' : '';
+  log(`Matador control plane on http://${config.host}:${config.port} (${names.length} queues)${ui}`);
 
   const shutdown = (): void => {
     void (async () => {
