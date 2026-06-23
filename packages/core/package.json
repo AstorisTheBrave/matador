@@ -1,9 +1,18 @@
 {
   "name": "@matadormq/core",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Neutral registry and one-line fail-open instrumentation for BullMQ.",
   "license": "AGPL-3.0-only",
-  "keywords": ["bullmq", "redis", "observability", "metrics", "prometheus", "opentelemetry", "queue", "monitoring"],
+  "keywords": [
+    "bullmq",
+    "redis",
+    "observability",
+    "metrics",
+    "prometheus",
+    "opentelemetry",
+    "queue",
+    "monitoring"
+  ],
   "homepage": "https://github.com/AstorisTheBrave/matador#readme",
   "bugs": "https://github.com/AstorisTheBrave/matador/issues",
   "repository": {
@@ -16,9 +25,14 @@
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" }
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup"
   },

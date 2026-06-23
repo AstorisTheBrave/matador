@@ -1,9 +1,17 @@
 {
   "name": "@matadormq/otlp",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "OpenTelemetry (OTLP) metrics exporter for Matador.",
   "license": "AGPL-3.0-only",
-  "keywords": ["bullmq", "opentelemetry", "otlp", "metrics", "observability", "queue", "monitoring"],
+  "keywords": [
+    "bullmq",
+    "opentelemetry",
+    "otlp",
+    "metrics",
+    "observability",
+    "queue",
+    "monitoring"
+  ],
   "homepage": "https://github.com/AstorisTheBrave/matador#readme",
   "bugs": "https://github.com/AstorisTheBrave/matador/issues",
   "repository": {
