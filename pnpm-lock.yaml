@@ -95,6 +95,9 @@ importers:
 
   packages/otlp:
     dependencies:
+      '@matadormq/core':
+        specifier: workspace:^
+        version: link:../core
       '@opentelemetry/api':
         specifier: ^1.9.1
         version: 1.9.1
@@ -108,22 +111,19 @@ importers:
         specifier: ^2.8.0
         version: 2.8.0(@opentelemetry/api@1.9.1)
     devDependencies:
-      '@matadormq/core':
-        specifier: workspace:*
-        version: link:../core
       '@types/node':
         specifier: ^26.0.0
         version: 26.0.0
 
   packages/prometheus:
     dependencies:
+      '@matadormq/core':
+        specifier: workspace:^
+        version: link:../core
       prom-client:
         specifier: ^15.1.0
         version: 15.1.3
     devDependencies:
-      '@matadormq/core':
-        specifier: workspace:*
-        version: link:../core
       '@types/node':
         specifier: ^26.0.0
         version: 26.0.0

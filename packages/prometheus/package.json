@@ -23,14 +23,13 @@
     "build": "tsup"
   },
   "dependencies": {
+    "@matadormq/core": "workspace:^",
     "prom-client": "^15.1.0"
   },
   "peerDependencies": {
-    "@matadormq/core": "workspace:*",
     "fastify": ">=4"
   },
   "devDependencies": {
-    "@matadormq/core": "workspace:*",
     "@types/node": "^26.0.0",
     "bullmq": "^5.34.0",
     "fastify": "^5.1.0",

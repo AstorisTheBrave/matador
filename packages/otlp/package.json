@@ -27,14 +27,11 @@
   "scripts": {
     "build": "tsup"
   },
-  "peerDependencies": {
-    "@matadormq/core": "workspace:*"
-  },
   "devDependencies": {
-    "@matadormq/core": "workspace:*",
     "@types/node": "^26.0.0"
   },
   "dependencies": {
+    "@matadormq/core": "workspace:^",
     "@opentelemetry/api": "^1.9.1",
     "@opentelemetry/exporter-metrics-otlp-http": "^0.219.0",
     "@opentelemetry/resources": "^2.8.0",
