@@ -16,3 +16,5 @@ export type { QueueLike, QueueDetail, QueueControllerOptions } from './queues.js
 export { QueueActions } from './actions.js';
 export type { QueueOpsLike, JobOpsLike, QueueActionsOptions } from './actions.js';
 export { UnknownQueueError, ConfirmRequiredError } from './errors.js';
+export { buildControlApp } from './server.js';
+export type { ControlDeps } from './server.js';
