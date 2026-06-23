@@ -1,0 +1,34 @@
+{
+  "name": "@matadormq/control",
+  "version": "0.0.0",
+  "description": "Control plane for Matador: queue views and safe operational actions over BullMQ.",
+  "license": "AGPL-3.0-only",
+  "keywords": ["bullmq", "redis", "queue", "control-plane", "ops", "dashboard", "observability"],
+  "homepage": "https://github.com/AstorisTheBrave/matador#readme",
+  "bugs": "https://github.com/AstorisTheBrave/matador/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AstorisTheBrave/matador.git",
+    "directory": "packages/control"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup"
+  },
+  "dependencies": {
+    "@matadormq/core": "workspace:^",
+    "bullmq": "^5.34.0",
+    "fastify": "^5.1.0",
+    "ioredis": "^5.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.0"
+  }
+}
