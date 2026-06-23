@@ -18,6 +18,9 @@
   "exports": {
     ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" }
   },
+  "bin": {
+    "matador-control": "./dist/cli.js"
+  },
   "files": ["dist"],
   "scripts": {
     "build": "tsup"

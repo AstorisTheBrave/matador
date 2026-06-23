@@ -1,9 +1,9 @@
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
-  entry: ['src/index.ts'],
+  entry: ['src/index.ts', 'src/cli.ts'],
   format: ['esm'],
-  dts: true,
+  dts: { entry: 'src/index.ts' },
   clean: true,
-  external: ['@matadormq/core', 'bullmq', 'ioredis', 'fastify'],
+  external: ['@matadormq/core', 'bullmq', 'ioredis', 'fastify', 'prom-client'],
 });

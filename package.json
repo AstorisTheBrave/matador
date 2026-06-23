@@ -32,7 +32,8 @@
   "pnpm": {
     "overrides": {
       "esbuild": "^0.28.1",
-      "read-yaml-file": "^2.1.0"
+      "read-yaml-file": "^2.1.0",
+      "ioredis": "^5.11.0"
     }
   }
 }
