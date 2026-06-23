@@ -1,0 +1,35 @@
+{
+  "name": "@matador/otlp",
+  "version": "0.0.0",
+  "description": "OpenTelemetry (OTLP) metrics exporter for Matador.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup"
+  },
+  "peerDependencies": {
+    "@matador/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@matador/core": "workspace:*",
+    "@types/node": "^26.0.0"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/exporter-metrics-otlp-http": "^0.219.0",
+    "@opentelemetry/resources": "^2.8.0",
+    "@opentelemetry/sdk-metrics": "^2.8.0"
+  }
+}
