@@ -13,3 +13,6 @@ export { sanitizeFailedJob, clampPageSize, paginate } from './views.js';
 export type { FailedJobView, Page } from './views.js';
 export { QueueController } from './queues.js';
 export type { QueueLike, QueueDetail, QueueControllerOptions } from './queues.js';
+export { QueueActions } from './actions.js';
+export type { QueueOpsLike, JobOpsLike, QueueActionsOptions } from './actions.js';
+export { UnknownQueueError, ConfirmRequiredError } from './errors.js';
