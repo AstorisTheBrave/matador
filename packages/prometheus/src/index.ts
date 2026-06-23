@@ -1,5 +1,5 @@
-import { Registry } from 'prom-client';
-import type { JobLabels, MetricsSink } from '@matador/core';
+import { Gauge, Registry } from 'prom-client';
+import { JOB_STATES, type JobLabels, type MetricsSink, type QueueDepthCollector } from '@matador/core';
 import { buildMetrics, type Metrics } from './metrics.js';
 
 const DEFAULT_BUCKETS = [0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10, 30, 60, 300];
@@ -39,6 +39,29 @@ export class PrometheusSink implements MetricsSink {
   }
   incInstrumentationError(): void {
     this.m.instrumentationErrors.inc();
+  }
+
+  /**
+   * Register a scrape-time `matador_queue_depth` gauge that reads the collector
+   * once per scrape (single-flight, invariant I6). Labels are `queue` and `state`
+   * only (invariant I5).
+   */
+  attachQueueDepth(collector: QueueDepthCollector): void {
+    new Gauge({
+      name: 'matador_queue_depth',
+      help: 'Jobs per queue per state, read at scrape time behind a single-flight cache.',
+      labelNames: ['queue', 'state'],
+      registers: [this.registry],
+      async collect() {
+        const snapshot = await collector.snapshot();
+        this.reset();
+        for (const [queue, counts] of snapshot) {
+          for (const state of JOB_STATES) {
+            this.set({ queue, state }, counts[state]);
+          }
+        }
+      },
+    });
   }
 }
 
