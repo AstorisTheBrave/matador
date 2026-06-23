@@ -1,0 +1,102 @@
+/* ============================================================
+   Matador · Typeface presets ("type personalities")
+   Layer ONE .matador-type-* class to repoint the family tokens for
+   a niche. --font-display is for headings/hero text; --font-sans is
+   body UI. Default (no class) uses Geist for both.
+
+   Pick by vibe:
+     default  -> Geist            : neutral, modern, product UI
+     grotesk  -> Space Grotesk    : geometric, techy, startup/SaaS
+     editorial-> Instrument Serif : elegant serif headings + Geist body, for
+                                    content, luxury, editorial niches
+     paint    -> Finger Paint     : playful hand-painted headings + Geist body,
+                                    for creative, kids, events, fun brands
+
+   Display faces are decorative: keep them for headings/hero only, never
+   body copy. The presets below put expressive faces on --font-display and
+   keep a readable --font-sans for body.
+   ============================================================ */
+
+.matador-type-grotesk {
+  --font-display: "Space Grotesk", "Geist", system-ui, sans-serif;
+  --font-sans: "Space Grotesk", "Geist", system-ui, sans-serif;
+}
+
+.matador-type-editorial {
+  --font-display: "Instrument Serif", Georgia, "Times New Roman", serif;
+  /* body stays Geist for readability */
+}
+
+.matador-type-paint {
+  --font-display: "Finger Paint", "Geist", system-ui, sans-serif;
+  /* body stays Geist; Finger Paint is heading-only */
+}
+
+/* Display / characterful headings (Bricolage), keeps Geist body. */
+.matador-type-bricolage {
+  --font-display: "Bricolage Grotesque", "Geist", system-ui, sans-serif;
+}
+
+/* Humanist sans across the board (Hanken): warm, friendly product UI. */
+.matador-type-humanist {
+  --font-display: "Hanken Grotesk", "Geist", system-ui, sans-serif;
+  --font-sans: "Hanken Grotesk", "Geist", system-ui, sans-serif;
+}
+
+/* Long-form reading serif (Newsreader) for headings + body, for articles. */
+.matador-type-reading {
+  --font-display: "Newsreader", Georgia, serif;
+  --font-sans: "Newsreader", Georgia, serif;
+}
+
+/* Bold grotesque (Archivo) headings: confident, editorial-poster energy. */
+.matador-type-bold {
+  --font-display: "Archivo", "Geist", system-ui, sans-serif;
+}
+
+/* Geometric tech (Sora): modern, precise, good for AI / data products. */
+.matador-type-tech {
+  --font-display: "Sora", "Geist", system-ui, sans-serif;
+  --font-sans: "Sora", "Geist", system-ui, sans-serif;
+}
+
+/* Casual handwriting (Caveat) headings only, for friendly / personal brands. */
+.matador-type-casual {
+  --font-display: "Caveat", "Geist", system-ui, sans-serif;
+}
+
+/* ---- Single-family display presets (library v2) ---- */
+.matador-type-fashion  { --font-display: "Playfair Display", Georgia, serif; }   /* high-contrast editorial */
+.matador-type-wonky    { --font-display: "Fraunces", Georgia, serif; }           /* old-meets-new, optical */
+.matador-type-luxe     { --font-display: "Cormorant Garamond", Georgia, serif; } /* luxury display serif */
+.matador-type-dmserif  { --font-display: "DM Serif Display", Georgia, serif; }   /* clean editorial serif */
+.matador-type-poster   { --font-display: "Archivo", "Geist", sans-serif; font-stretch: 125%; } /* heavy poster */
+.matador-type-art      { --font-display: "Syne", "Geist", sans-serif; }          /* bold, unconventional */
+.matador-type-loud     { --font-display: "Unbounded", "Geist", sans-serif; }     /* extra-expressive display */
+.matador-type-friendly { --font-display: "Gabarito", "Geist", sans-serif; }      /* rounded, approachable */
+
+/* ---- Body-affecting single families ---- */
+.matador-type-product  { --font-display: "Plus Jakarta Sans", system-ui, sans-serif; --font-sans: "Plus Jakarta Sans", system-ui, sans-serif; }
+.matador-type-data     { --font-display: "Manrope", system-ui, sans-serif; --font-sans: "Manrope", system-ui, sans-serif; }   /* great figures for dashboards */
+.matador-type-classic  { --font-display: "Work Sans", system-ui, sans-serif; --font-sans: "Work Sans", system-ui, sans-serif; }
+.matador-type-geometric{ --font-display: "Outfit", system-ui, sans-serif; --font-sans: "Outfit", system-ui, sans-serif; }
+.matador-type-serifbody{ --font-display: "Lora", Georgia, serif; --font-sans: "Lora", Georgia, serif; } /* warm reading serif */
+
+/* ============================================================
+   Curated pairing blends (.matador-pair-*)
+   Each sets BOTH --font-display (headline) and --font-sans (body)
+   to a research-backed combination: contrast with cohesion. Pick by
+   the vibe in the comment. Use --font-mono separately for code.
+   ============================================================ */
+.matador-pair-luxe      { --font-display: "Cormorant Garamond", serif; --font-sans: "Hanken Grotesk", system-ui, sans-serif; }  /* premium / wealth */
+.matador-pair-fashion   { --font-display: "Playfair Display", serif;   --font-sans: "Work Sans", system-ui, sans-serif; }       /* fashion / magazine */
+.matador-pair-wonky     { --font-display: "Fraunces", serif;           --font-sans: "Outfit", system-ui, sans-serif; }          /* craft / old-meets-new */
+.matador-pair-editorial { --font-display: "DM Serif Display", serif;   --font-sans: "DM Sans", system-ui, sans-serif; }          /* clean editorial */
+.matador-pair-futurist  { --font-display: "Space Grotesk", sans-serif; --font-sans: "Plus Jakarta Sans", system-ui, sans-serif; } /* retro-futuristic SaaS */
+.matador-pair-quirky    { --font-display: "Bricolage Grotesque", sans-serif; --font-sans: "Outfit", system-ui, sans-serif; }     /* indie / editorial product */
+.matador-pair-poster    { --font-display: "Archivo", sans-serif;       --font-sans: "Work Sans", system-ui, sans-serif; }        /* bold marketing */
+.matador-pair-art       { --font-display: "Syne", sans-serif;          --font-sans: "Plus Jakarta Sans", system-ui, sans-serif; } /* art / web3 portfolio */
+.matador-pair-story     { --font-display: "Newsreader", serif;         --font-sans: "Hanken Grotesk", system-ui, sans-serif; }   /* long-form storytelling */
+.matador-pair-fintech   { --font-display: "Gabarito", sans-serif;      --font-sans: "Manrope", system-ui, sans-serif; }          /* friendly fintech, strong figures */
+.matador-pair-reading   { --font-display: "Fraunces", serif;           --font-sans: "Newsreader", serif; }                       /* immersive reading */
+.matador-pair-loud      { --font-display: "Unbounded", sans-serif;     --font-sans: "Plus Jakarta Sans", system-ui, sans-serif; } /* events / launches */

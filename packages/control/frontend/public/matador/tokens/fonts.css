@@ -1,0 +1,22 @@
+/* ============================================================
+   Matador · Webfonts
+   Geist + Geist Mono (variable), self-hosted. OFL-1.1.
+   Source: https://fonts.google.com/specimen/Geist
+   Only these two faces ship; display presets fall back gracefully.
+   ============================================================ */
+
+@font-face {
+  font-family: "Geist";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../assets/fonts/Geist-Variable.ttf") format("truetype-variations");
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../assets/fonts/GeistMono-Variable.ttf") format("truetype-variations");
+}
