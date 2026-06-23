@@ -7,6 +7,7 @@ import { instrumentWorker } from './instrument-worker.js';
 export type { MetricsSink, JobLabels } from './sink.js';
 export type { MatadorConfig, PartialConfig } from './types.js';
 export { NoopSink } from './sink.js';
+export { MultiSink } from './multi-sink.js';
 export { MatadorRegistry } from './registry.js';
 export { WaitTimeTracker } from './wait-time.js';
 export { QueueDepthCollector, JOB_STATES } from './scrape.js';
