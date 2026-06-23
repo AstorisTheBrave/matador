@@ -7,6 +7,8 @@ export interface MatadorConfig {
   waitTimeLruSize: number;
   /** TTL in ms for the scrape-time queue-depth single-flight cache (invariant I6). */
   scrapeCacheTtlMs: number;
+  /** Per-queue timeout in ms for a scrape-time getJobCounts read (fail-open on a hung Redis). */
+  scrapeTimeoutMs: number;
 }
 
 export type PartialConfig = Partial<MatadorConfig>;

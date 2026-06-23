@@ -5,6 +5,7 @@ const DEFAULTS: MatadorConfig = {
   durationBucketsSeconds: [0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10, 30, 60, 300],
   waitTimeLruSize: 10_000,
   scrapeCacheTtlMs: 5_000,
+  scrapeTimeoutMs: 5_000,
 };
 
 function envBool(v: string | undefined): boolean | undefined {
@@ -28,6 +29,8 @@ export function resolveConfig(kwargs: PartialConfig = {}): MatadorConfig {
   if (envLabel !== undefined) fromEnv.labelJobName = envLabel;
   const envTtl = envInt(process.env.MATADOR_SCRAPE_CACHE_TTL_MS);
   if (envTtl !== undefined) fromEnv.scrapeCacheTtlMs = envTtl;
+  const envTimeout = envInt(process.env.MATADOR_SCRAPE_TIMEOUT_MS);
+  if (envTimeout !== undefined) fromEnv.scrapeTimeoutMs = envTimeout;
 
   return { ...DEFAULTS, ...fromEnv, ...kwargs };
 }

@@ -43,6 +43,23 @@ interface CacheEntry {
   expiresAt: number;
 }
 
+/** Reject after `ms` if the underlying promise has not settled. */
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('getJobCounts timed out')), ms);
+    p.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e: unknown) => {
+        clearTimeout(timer);
+        reject(e instanceof Error ? e : new Error(String(e)));
+      },
+    );
+  });
+}
+
 /**
  * Reads queue-depth counts from registered queues at scrape time, behind a
  * short-TTL single-flight cache: N concurrent scrapers cost one Redis round-trip
@@ -58,6 +75,7 @@ export class QueueDepthCollector {
     private readonly ttlMs: number,
     private readonly onError: () => void,
     private readonly now: () => number = () => Date.now(),
+    private readonly timeoutMs: number = 5_000,
   ) {}
 
   register(queue: MinimalQueue): void {
@@ -81,7 +99,7 @@ export class QueueDepthCollector {
     const entries = await Promise.all(
       [...this.queues.values()].map(async (queue): Promise<[string, JobCounts]> => {
         try {
-          const raw = await queue.getJobCounts(...JOB_STATES);
+          const raw = await withTimeout(queue.getJobCounts(...JOB_STATES), this.timeoutMs);
           const counts = zeroCounts();
           for (const state of JOB_STATES) {
             const n = raw[state];

@@ -17,8 +17,11 @@ export class MatadorRegistry {
   /** Lazily created scrape-time queue-depth collector (invariant I6). */
   get depthCollector(): QueueDepthCollector {
     if (!this._depthCollector) {
-      this._depthCollector = new QueueDepthCollector(this.config.scrapeCacheTtlMs, () =>
-        this.sink.incInstrumentationError(),
+      this._depthCollector = new QueueDepthCollector(
+        this.config.scrapeCacheTtlMs,
+        () => this.sink.incInstrumentationError(),
+        undefined,
+        this.config.scrapeTimeoutMs,
       );
     }
     return this._depthCollector;

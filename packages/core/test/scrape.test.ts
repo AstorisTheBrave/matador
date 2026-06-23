@@ -57,4 +57,18 @@ describe('QueueDepthCollector', () => {
     expect(snap.get('q')).toEqual(zeros);
     expect(onError).toHaveBeenCalledTimes(1);
   });
+
+  it('times out a hung getJobCounts and fails open (reliability)', async () => {
+    const onError = vi.fn();
+    const c = new QueueDepthCollector(5000, onError, () => Date.now(), 20);
+    c.register({
+      name: 'q',
+      getJobCounts: () => new Promise(() => {}), // never resolves
+    });
+
+    const snap = await c.snapshot();
+
+    expect(snap.get('q')).toEqual(zeros);
+    expect(onError).toHaveBeenCalledTimes(1);
+  });
 });
