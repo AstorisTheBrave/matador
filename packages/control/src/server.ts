@@ -104,6 +104,15 @@ export function buildControlApp(config: ControlConfig, deps: ControlDeps): Fasti
     return reply.send(detail);
   });
 
+  app.get('/api/queues/:name/dlq/analytics', async (req, reply) => {
+    if (rateLimited(req, reply, viewerLimiter)) return;
+    if (!authViewer(req)) return reply.code(401).send({ error: 'unauthorized' });
+    const { name } = req.params as { name: string };
+    const analytics = await deps.controller.dlqAnalytics(name);
+    if (!analytics) return reply.code(404).send({ error: 'unknown_queue' });
+    return reply.send(analytics);
+  });
+
   const opsHandler =
     (action: string, run: (name: string, req: FastifyRequest) => Promise<unknown>) =>
     async (req: FastifyRequest, reply: FastifyReply) => {

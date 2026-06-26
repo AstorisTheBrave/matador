@@ -20,9 +20,11 @@ const counts = {
 function deps(over: Partial<ControlDeps> = {}): ControlDeps {
   return {
     controller: {
-      list: async () => [{ name: 'emails', counts: { ...counts } }],
+      list: async () => [{ name: 'emails', counts: { ...counts }, stuck: false }],
       detail: async (name: string) =>
-        name === 'emails' ? { name, counts: { ...counts }, dlqSample: [] } : undefined,
+        name === 'emails' ? { name, counts: { ...counts }, stuck: false, dlqSample: [] } : undefined,
+      dlqAnalytics: async (name: string) =>
+        name === 'emails' ? { total: 0, distinct: 0, groups: [] } : undefined,
     } as unknown as ControlDeps['controller'],
     actions: {
       pause: async () => ({ paused: true }),
@@ -81,6 +83,8 @@ describe('control server (tokens configured)', () => {
     const o = { authorization: 'Bearer o' };
 
     expect((await app.inject({ method: 'GET', url: '/api/queues/nope', headers: { authorization: 'Bearer v' } })).statusCode).toBe(404);
+    expect((await app.inject({ method: 'GET', url: '/api/queues/emails/dlq/analytics', headers: { authorization: 'Bearer v' } })).statusCode).toBe(200);
+    expect((await app.inject({ method: 'GET', url: '/api/queues/nope/dlq/analytics', headers: { authorization: 'Bearer v' } })).statusCode).toBe(404);
     expect(
       (await app.inject({ method: 'POST', url: '/api/queues/emails/drain-dlq', headers: o, payload: {} })).statusCode,
     ).toBe(400);
