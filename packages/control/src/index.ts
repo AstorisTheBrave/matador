@@ -23,6 +23,8 @@ export type {
 export { normalizeReason, groupFailures } from './analytics.js';
 export type { DlqAnalytics, FailureGroup } from './analytics.js';
 export { StuckDetector } from './stuck.js';
+export { ConnectionRegistry, maskRedisUrl } from './connections.js';
+export type { ConnectionSet, ConnectionFactory } from './connections.js';
 export { JobInspector, JOB_LIST_STATES } from './jobs.js';
 export type { JobSummary, JobDetail, JobTree, JobLike, InspectorQueueLike } from './jobs.js';
 export { MonitorEngine, AlertLog, evaluateBreaches } from './monitors.js';

@@ -129,6 +129,57 @@ describe('control server (limits and probes)', () => {
   });
 });
 
+import { ConnectionRegistry, type ConnectionSet } from '../src/connections.js';
+
+function setWith(queueName: string): ConnectionSet {
+  return {
+    controller: {
+      list: async () => [{ name: queueName, counts: { ...counts }, stuck: false }],
+      detail: async () => undefined,
+      dlqAnalytics: async () => undefined,
+      workers: async () => [],
+      metrics: async () => ({ type: 'completed', data: [], count: 0 }),
+    } as unknown as ConnectionSet['controller'],
+    actions: {} as ConnectionSet['actions'],
+    inspector: {} as ConnectionSet['inspector'],
+    ping: async () => true,
+    close: async () => {},
+  };
+}
+
+describe('control server (multi-connection)', () => {
+  it('lists connections and routes queue reads by ?connection', async () => {
+    const reg = new ConnectionRegistry('default', async (id) => setWith(`q-${id}`));
+    const def = setWith('q-default');
+    reg.register('default', def, 'redis://u:p@h:6379');
+    await reg.add('staging', 'redis://staging:6379');
+
+    const app = buildControlApp(cfg(), deps({ connections: reg, controller: def.controller }));
+    const conns = (await app.inject({ url: '/api/connections' })).json();
+    expect(conns.connections.map((c: { id: string }) => c.id).sort()).toEqual(['default', 'staging']);
+    expect(conns.connections[0].redisUrl).not.toContain('p@'); // credentials masked
+
+    expect((await app.inject({ url: '/api/queues' })).json().items[0].name).toBe('q-default');
+    expect((await app.inject({ url: '/api/queues?connection=staging' })).json().items[0].name).toBe('q-staging');
+    expect((await app.inject({ url: '/api/queues?connection=nope' })).statusCode).toBe(404);
+    await app.close();
+  });
+
+  it('admin can add/remove connections; ops cannot', async () => {
+    const reg = new ConnectionRegistry('default', async (id) => setWith(`q-${id}`));
+    reg.register('default', setWith('q'), 'redis://h');
+    const app = buildControlApp(cfg({ viewerToken: 'v', opsToken: 'o', adminToken: 'adm' }), deps({ connections: reg }));
+
+    const ops = { authorization: 'Bearer o' };
+    const adm = { authorization: 'Bearer adm' };
+    expect((await app.inject({ method: 'POST', url: '/api/connections', headers: ops, payload: { id: 's', redisUrl: 'redis://s' } })).statusCode).toBe(403);
+    expect((await app.inject({ method: 'POST', url: '/api/connections', headers: adm, payload: { id: 's', redisUrl: 'redis://s' } })).statusCode).toBe(201);
+    expect((await app.inject({ method: 'POST', url: '/api/connections', headers: adm, payload: { id: 't', redisUrl: 'http://x' } })).statusCode).toBe(400);
+    expect((await app.inject({ method: 'DELETE', url: '/api/connections/s', headers: adm })).statusCode).toBe(200);
+    await app.close();
+  });
+});
+
 describe('control server (monitors and alerts)', () => {
   it('serves monitor state and alert history (viewer)', async () => {
     const app = buildControlApp(

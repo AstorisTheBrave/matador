@@ -8,7 +8,11 @@ export interface ControlConfig {
   viewerToken: string | undefined;
   /** Token for operational actions (pause/resume/retry/drain). */
   opsToken: string | undefined;
+  /** Token for admin actions (manage connections). admin >= ops >= viewer. */
+  adminToken: string | undefined;
   redisUrl: string;
+  /** Extra named Redis connections beyond the default, selectable with ?connection=. */
+  connections: { id: string; redisUrl: string }[];
   /** Optional allowlist; when set, only these queues are discoverable. */
   queueAllowlist: string[] | undefined;
   statePath: string;
@@ -28,7 +32,9 @@ const DEFAULTS: ControlConfig = {
   port: 4319,
   viewerToken: undefined,
   opsToken: undefined,
+  adminToken: undefined,
   redisUrl: 'redis://127.0.0.1:6379',
+  connections: [],
   queueAllowlist: undefined,
   statePath: './matador-control-state.json',
   maxBodyBytes: 64 * 1024,
@@ -78,6 +84,19 @@ export function resolveControlConfig(kwargs: PartialControlConfig = {}): Control
   if (viewer !== undefined) fromEnv.viewerToken = viewer;
   const ops = readSecret(env.MATADOR_CONTROL_OPS_TOKEN, env.MATADOR_CONTROL_OPS_TOKEN_FILE);
   if (ops !== undefined) fromEnv.opsToken = ops;
+  const admin = readSecret(env.MATADOR_CONTROL_ADMIN_TOKEN, env.MATADOR_CONTROL_ADMIN_TOKEN_FILE);
+  if (admin !== undefined) fromEnv.adminToken = admin;
+  if (env.MATADOR_CONTROL_CONNECTIONS) {
+    const conns = env.MATADOR_CONTROL_CONNECTIONS.split(',')
+      .map((pair) => pair.trim())
+      .filter(Boolean)
+      .map((pair) => {
+        const eq = pair.indexOf('=');
+        return { id: pair.slice(0, eq).trim(), redisUrl: pair.slice(eq + 1).trim() };
+      })
+      .filter((c) => c.id !== '' && c.redisUrl !== '');
+    if (conns.length > 0) fromEnv.connections = conns;
+  }
   const maxBody = envInt(env.MATADOR_CONTROL_MAX_BODY_BYTES);
   if (maxBody !== undefined) fromEnv.maxBodyBytes = maxBody;
 

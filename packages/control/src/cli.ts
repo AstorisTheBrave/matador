@@ -14,6 +14,7 @@ import { buildControlApp } from './server.js';
 import { discoverQueueNames } from './discovery.js';
 import { AlertLog, MonitorEngine, type MonitorContext } from './monitors.js';
 import { PagerDutyNotifier, SlackNotifier, WebhookNotifier, type Notifier } from './notifier.js';
+import { ConnectionRegistry, type ConnectionFactory, type ConnectionSet } from './connections.js';
 
 function log(msg: string): void {
   process.stdout.write(`${msg}\n`);
@@ -30,15 +31,62 @@ async function run(): Promise<void> {
 
   const lock = new StateLock(`${config.statePath}.lock`);
   await lock.acquire();
+  const audit = new AuditLog(`${config.statePath}.audit.jsonl`);
 
+  // Factory builds a full connection set (its own Redis + queues).
+  const factory: ConnectionFactory = async (_id, redisUrl) => {
+    const conn = new IORedis(redisUrl, { maxRetriesPerRequest: null });
+    const qnames = await resolveQueueNames(config, conn);
+    const qmap = new Map(qnames.map((name) => [name, new Queue(name, { connection: conn })]));
+    return {
+      controller: new QueueController(qmap, { scrapeCacheTtlMs: 5_000 }),
+      actions: new QueueActions(qmap, audit),
+      inspector: new JobInspector(qmap as never, audit),
+      ping: async () => {
+        try {
+          await conn.ping();
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      close: async () => {
+        await conn.quit().catch(() => undefined);
+      },
+    };
+  };
+
+  const registry = new ConnectionRegistry('default', factory);
+
+  // Default connection: keep the raw client for monitor INFO probes.
   const connection = new IORedis(config.redisUrl, { maxRetriesPerRequest: null });
   const names = await resolveQueueNames(config, connection);
   const queues = new Map(names.map((name) => [name, new Queue(name, { connection })]));
-  const audit = new AuditLog(`${config.statePath}.audit.jsonl`);
-
-  const controller = new QueueController(queues, { scrapeCacheTtlMs: 5_000 });
-  const actions = new QueueActions(queues, audit);
-  const inspector = new JobInspector(queues as never, audit);
+  const defaultSet: ConnectionSet = {
+    controller: new QueueController(queues, { scrapeCacheTtlMs: 5_000 }),
+    actions: new QueueActions(queues, audit),
+    inspector: new JobInspector(queues as never, audit),
+    ping: async () => {
+      try {
+        await connection.ping();
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    close: async () => {
+      await connection.quit().catch(() => undefined);
+    },
+  };
+  registry.register('default', defaultSet, config.redisUrl);
+  for (const c of config.connections) {
+    try {
+      await registry.add(c.id, c.redisUrl);
+    } catch (err) {
+      log(`connection ${c.id}: ${(err as Error).message}`);
+    }
+  }
+  const controller = defaultSet.controller;
 
   // Live monitors + notifications.
   const notifiers: Notifier[] = [];
@@ -87,32 +135,30 @@ async function run(): Promise<void> {
 
   const staticDir = fileURLToPath(new URL('./public', import.meta.url));
   const app = buildControlApp(config, {
-    controller,
-    actions,
-    inspector,
+    controller: defaultSet.controller,
+    actions: defaultSet.actions,
+    inspector: defaultSet.inspector,
+    connections: registry,
     monitors: { current: () => engine.current(), config: config.monitors },
     alerts: alertLog,
-    ping: async () => {
-      try {
-        await connection.ping();
-        return true;
-      } catch {
-        return false;
-      }
-    },
+    ping: defaultSet.ping,
     ...(existsSync(staticDir) ? { staticDir } : {}),
   });
 
   await app.listen({ host: config.host, port: config.port });
   const ui = existsSync(staticDir) ? ' · dashboard at /' : '';
-  log(`Matador control plane on http://${config.host}:${config.port} (${names.length} queues)${ui}`);
+  const connCount = registry.ids().length;
+  log(
+    `Matador control plane on http://${config.host}:${config.port} ` +
+      `(${names.length} queues, ${connCount} connection${connCount === 1 ? '' : 's'})${ui}`,
+  );
 
   const shutdown = (): void => {
     if (monitorTimer) clearInterval(monitorTimer);
     void (async () => {
       await app.close();
       await lock.release();
-      await connection.quit();
+      await registry.closeAll();
       process.exit(0);
     })();
   };
@@ -130,7 +176,11 @@ async function doctor(): Promise<void> {
     const names = await resolveQueueNames(config, connection);
     log(`queues: ${names.length === 0 ? '(none discovered)' : names.join(', ')}`);
     log(`bind: ${config.host}:${config.port}`);
-    log(`auth: viewer=${config.viewerToken ? 'set' : 'unset'} ops=${config.opsToken ? 'set' : 'unset'}`);
+    log(
+      `auth: viewer=${config.viewerToken ? 'set' : 'unset'} ` +
+        `ops=${config.opsToken ? 'set' : 'unset'} admin=${config.adminToken ? 'set' : 'unset'}`,
+    );
+    log(`connections: default + ${config.connections.map((c) => c.id).join(', ') || '(none extra)'}`);
   } catch (err) {
     log(`redis: UNREACHABLE (${(err as Error).message})`);
     process.exitCode = 1;
