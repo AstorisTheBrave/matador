@@ -44,6 +44,13 @@ describe('evaluateBreaches', () => {
     );
     expect([...breaches.keys()].sort()).toEqual(['backlog:emails', 'connection', 'failed:emails', 'memory', 'workers:emails']);
   });
+
+  it('flags slow jobs only when the queue is stuck', () => {
+    const stuck = { queues: [{ name: 'q', counts: counts(), workers: 1, stuck: true }], redis: { reachable: true } };
+    const ok = { queues: [{ name: 'q', counts: counts(), workers: 1, stuck: false }], redis: { reachable: true } };
+    expect([...evaluateBreaches({ slowJobs: true }, stuck, 'now').keys()]).toEqual(['slow:q']);
+    expect([...evaluateBreaches({ slowJobs: true }, ok, 'now').keys()]).toEqual([]);
+  });
 });
 
 describe('MonitorEngine', () => {

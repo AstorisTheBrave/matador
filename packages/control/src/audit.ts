@@ -7,7 +7,12 @@ export type AuditAction =
   | 'drain-dlq'
   | 'retry-job'
   | 'remove-job'
-  | 'promote-job';
+  | 'promote-job'
+  | 'discard-job'
+  | 'clone-job'
+  | 'edit-job'
+  | 'add-job'
+  | 'promote-delayed';
 
 export interface AuditEntry {
   /** Server-stamped ISO timestamp (never trusted from the client). */

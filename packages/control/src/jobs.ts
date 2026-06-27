@@ -19,6 +19,8 @@ export interface JobLike {
   retry(state?: string): Promise<void>;
   remove(): Promise<void>;
   promote(): Promise<void>;
+  discard?(): Promise<void>;
+  updateData?(data: unknown): Promise<void>;
   getDependenciesCount?(): Promise<{ processed?: number; unprocessed?: number }>;
 }
 
@@ -27,6 +29,8 @@ export interface InspectorQueueLike {
   getJobs(types: string[], start: number, end: number, asc?: boolean): Promise<JobLike[]>;
   getJob(id: string): Promise<JobLike | null | undefined>;
   getJobLogs(id: string, start?: number, end?: number): Promise<{ logs: string[]; count: number }>;
+  add?(name: string, data: unknown, opts?: unknown): Promise<{ id?: string }>;
+  getDelayed?(start: number, end: number): Promise<JobLike[]>;
 }
 
 export interface JobSummary {
@@ -176,7 +180,7 @@ export class JobInspector {
   }
 
   private async act(
-    action: 'retry-job' | 'remove-job' | 'promote-job',
+    action: 'retry-job' | 'remove-job' | 'promote-job' | 'discard-job' | 'edit-job',
     queue: string,
     id: string,
     actor: string,
@@ -198,5 +202,54 @@ export class JobInspector {
   }
   promote(queue: string, id: string, actor: string): Promise<{ ok: boolean }> {
     return this.act('promote-job', queue, id, actor, (j) => j.promote());
+  }
+  discard(queue: string, id: string, actor: string): Promise<{ ok: boolean }> {
+    return this.act('discard-job', queue, id, actor, (j) => (j.discard ? j.discard() : j.remove()));
+  }
+  edit(queue: string, id: string, actor: string, data: unknown): Promise<{ ok: boolean }> {
+    return this.act('edit-job', queue, id, actor, (j) => (j.updateData ? j.updateData(data) : Promise.resolve()));
+  }
+
+  /** Re-add a copy of an existing job with the same name, data, and options. */
+  async clone(queue: string, id: string, actor: string): Promise<{ ok: boolean; id?: string }> {
+    const q = this.require(queue);
+    const job = await q.getJob(id);
+    if (!job || !q.add) return { ok: false };
+    const created = await q.add(job.name, job.data, job.opts);
+    await this.audit.record({ action: 'clone-job', queue, actor, detail: { from: id, to: created.id } });
+    return created.id !== undefined ? { ok: true, id: created.id } : { ok: true };
+  }
+
+  /** Add a new job to a queue. */
+  async addJob(
+    queue: string,
+    actor: string,
+    name: string,
+    data: unknown,
+    opts?: unknown,
+  ): Promise<{ ok: boolean; id?: string }> {
+    const q = this.require(queue);
+    if (!q.add) return { ok: false };
+    const created = await q.add(name, data, opts);
+    await this.audit.record({ action: 'add-job', queue, actor, detail: { name, id: created.id } });
+    return created.id !== undefined ? { ok: true, id: created.id } : { ok: true };
+  }
+
+  /** Promote a bounded batch of delayed jobs to waiting. */
+  async promoteDelayed(queue: string, actor: string, limit = 1000): Promise<{ promoted: number }> {
+    const q = this.require(queue);
+    if (!q.getDelayed) return { promoted: 0 };
+    const delayed = await q.getDelayed(0, Math.max(0, limit - 1));
+    let promoted = 0;
+    for (const job of delayed.slice(0, limit)) {
+      try {
+        await job.promote();
+        promoted += 1;
+      } catch {
+        /* a job that already left delayed is skipped */
+      }
+    }
+    await this.audit.record({ action: 'promote-delayed', queue, actor, detail: { promoted } });
+    return { promoted };
   }
 }

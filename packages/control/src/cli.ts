@@ -103,6 +103,7 @@ async function run(): Promise<void> {
         name: q.name,
         counts: q.counts,
         workers: (await controller.workers(q.name))?.length ?? 0,
+        stuck: q.stuck,
       })),
     );
     let reachable = true;

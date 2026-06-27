@@ -87,4 +87,38 @@ describe('JobInspector', () => {
     expect(await insp.retry('emails', 'nope', 'ops')).toEqual({ ok: false });
     await expect(insp.list('other', 'failed')).rejects.toBeInstanceOf(UnknownQueueError);
   });
+
+  it('discards, edits, clones, adds, and promotes delayed jobs (audited)', async () => {
+    const audit = await newAudit();
+    const j = job('1', {
+      discard: vi.fn(async () => {}),
+      updateData: vi.fn(async () => {}),
+      promote: vi.fn(async () => {}),
+    });
+    const delayed = [job('d1'), job('d2')];
+    const add = vi.fn(async () => ({ id: 'new-1' }));
+    const q = {
+      name: 'emails',
+      getJobs: vi.fn(async () => []),
+      getJob: vi.fn(async (id) => (id === '1' ? j : undefined)),
+      getJobLogs: vi.fn(async () => ({ logs: [], count: 0 })),
+      add,
+      getDelayed: vi.fn(async () => delayed),
+    };
+    const insp = new JobInspector(new Map([['emails', q]]), audit);
+
+    expect(await insp.discard('emails', '1', 'ops')).toEqual({ ok: true });
+    expect(j.discard).toHaveBeenCalled();
+    expect(await insp.edit('emails', '1', 'ops', { x: 1 })).toEqual({ ok: true });
+    expect(j.updateData).toHaveBeenCalledWith({ x: 1 });
+    expect(await insp.clone('emails', '1', 'ops')).toEqual({ ok: true, id: 'new-1' });
+    expect(await insp.addJob('emails', 'ops', 'send', { to: 'a' })).toEqual({ ok: true, id: 'new-1' });
+    expect(add).toHaveBeenCalledTimes(2);
+    expect(await insp.promoteDelayed('emails', 'ops')).toEqual({ promoted: 2 });
+
+    const actions = (await audit.readAll()).map((e) => e.action);
+    expect(actions).toEqual(
+      expect.arrayContaining(['discard-job', 'edit-job', 'clone-job', 'add-job', 'promote-delayed']),
+    );
+  });
 });

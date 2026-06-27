@@ -11,12 +11,14 @@ export interface MonitorConfig {
   maxMemoryBytes?: number;
   /** Alert when a queue has pending jobs but no workers. */
   missingWorkers?: boolean;
+  /** Alert when a queue is stuck (active work but no throughput). */
+  slowJobs?: boolean;
   /** Alert when Redis is unreachable. */
   connection?: boolean;
 }
 
 export interface MonitorContext {
-  queues: { name: string; counts: JobCounts; workers: number }[];
+  queues: { name: string; counts: JobCounts; workers: number; stuck?: boolean }[];
   redis: { reachable: boolean; usedMemoryBytes?: number };
 }
 
@@ -59,6 +61,9 @@ export function evaluateBreaches(
         `workers:${q.name}`,
         alert('missing-workers', 'critical', q.name, `${q.name} has pending jobs but no workers`, ts),
       );
+    }
+    if (config.slowJobs && q.stuck) {
+      out.set(`slow:${q.name}`, alert('slow-jobs', 'warning', q.name, `${q.name} has slow or stuck jobs`, ts));
     }
   }
   return out;

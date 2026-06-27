@@ -116,6 +116,7 @@ export function resolveControlConfig(kwargs: PartialControlConfig = {}): Control
   const maxMem = envInt(env.MATADOR_CONTROL_MONITOR_MAX_MEMORY);
   if (maxMem !== undefined) monitors.maxMemoryBytes = maxMem;
   if (envBool(env.MATADOR_CONTROL_MONITOR_MISSING_WORKERS)) monitors.missingWorkers = true;
+  if (envBool(env.MATADOR_CONTROL_MONITOR_SLOW_JOBS)) monitors.slowJobs = true;
   if (envBool(env.MATADOR_CONTROL_MONITOR_CONNECTION)) monitors.connection = true;
   if (Object.keys(monitors).length > 0) fromEnv.monitors = monitors;
 

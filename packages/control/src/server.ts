@@ -353,7 +353,7 @@ export function buildControlApp(config: ControlConfig, deps: ControlDeps): Fasti
       }
     });
 
-    const jobAction = (action: 'retry' | 'remove' | 'promote') =>
+    const jobAction = (action: 'retry' | 'remove' | 'promote' | 'discard' | 'clone') =>
       async (req: FastifyRequest, reply: FastifyReply) => {
         if (rateLimited(req, reply, opsLimiter)) return;
         if (!authViewer(req)) return reply.code(401).send({ error: 'unauthorized' });
@@ -375,6 +375,67 @@ export function buildControlApp(config: ControlConfig, deps: ControlDeps): Fasti
     app.post('/api/queues/:name/jobs/:id/retry', jobAction('retry'));
     app.post('/api/queues/:name/jobs/:id/remove', jobAction('remove'));
     app.post('/api/queues/:name/jobs/:id/promote', jobAction('promote'));
+    app.post('/api/queues/:name/jobs/:id/discard', jobAction('discard'));
+    app.post('/api/queues/:name/jobs/:id/clone', jobAction('clone'));
+
+    // Edit a job's data.
+    app.patch('/api/queues/:name/jobs/:id', async (req, reply) => {
+      if (rateLimited(req, reply, opsLimiter)) return;
+      if (!authViewer(req)) return reply.code(401).send({ error: 'unauthorized' });
+      if (!authOps(req)) return reply.code(403).send({ error: 'forbidden' });
+      const insp = inspectorOf(req);
+      if (insp === null) return unknownConnection(reply);
+      if (!insp) return notFound(reply);
+      const { name, id } = req.params as { name: string; id: string };
+      const body = req.body as { data?: unknown } | undefined;
+      try {
+        const result = await insp.edit(name, id, 'ops', body?.data);
+        return result.ok ? reply.send(result) : notFound(reply);
+      } catch (err) {
+        if (err instanceof UnknownQueueError) return notFound(reply);
+        throw err;
+      }
+    });
+
+    // Add a new job to a queue.
+    app.post('/api/queues/:name/jobs', async (req, reply) => {
+      if (rateLimited(req, reply, opsLimiter)) return;
+      if (!authViewer(req)) return reply.code(401).send({ error: 'unauthorized' });
+      if (!authOps(req)) return reply.code(403).send({ error: 'forbidden' });
+      const insp = inspectorOf(req);
+      if (insp === null) return unknownConnection(reply);
+      if (!insp) return notFound(reply);
+      const { name } = req.params as { name: string };
+      const body = req.body as { name?: string; data?: unknown; opts?: unknown } | undefined;
+      if (!body?.name) return reply.code(400).send({ error: 'job_name_required' });
+      try {
+        const result = await insp.addJob(name, 'ops', body.name, body.data ?? {}, body.opts);
+        actionCounter.inc({ action: 'add-job' });
+        return result.ok ? reply.code(201).send(result) : notFound(reply);
+      } catch (err) {
+        if (err instanceof UnknownQueueError) return notFound(reply);
+        throw err;
+      }
+    });
+
+    // Promote all delayed jobs (bounded batch).
+    app.post('/api/queues/:name/promote-delayed', async (req, reply) => {
+      if (rateLimited(req, reply, opsLimiter)) return;
+      if (!authViewer(req)) return reply.code(401).send({ error: 'unauthorized' });
+      if (!authOps(req)) return reply.code(403).send({ error: 'forbidden' });
+      const insp = inspectorOf(req);
+      if (insp === null) return unknownConnection(reply);
+      if (!insp) return notFound(reply);
+      const { name } = req.params as { name: string };
+      try {
+        const result = await insp.promoteDelayed(name, 'ops');
+        actionCounter.inc({ action: 'promote-delayed' });
+        return reply.send(result);
+      } catch (err) {
+        if (err instanceof UnknownQueueError) return notFound(reply);
+        throw err;
+      }
+    });
   }
 
   // Serve the dashboard SPA (open: it carries no data; the API behind it is gated).
