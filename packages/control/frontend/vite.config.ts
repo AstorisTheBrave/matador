@@ -9,9 +9,9 @@ export default defineConfig({
   // Dev convenience: proxy API calls to a locally running control plane.
   server: {
     proxy: {
-      '/api': 'http://localhost:4319',
-      '/healthz': 'http://localhost:4319',
-      '/readyz': 'http://localhost:4319',
+      '/api': 'http://127.0.0.1:4319',
+      '/healthz': 'http://127.0.0.1:4319',
+      '/readyz': 'http://127.0.0.1:4319',
     },
   },
 });
