@@ -129,6 +129,23 @@ describe('control server (limits and probes)', () => {
   });
 });
 
+describe('control server (monitors and alerts)', () => {
+  it('serves monitor state and alert history (viewer)', async () => {
+    const app = buildControlApp(
+      cfg(),
+      deps({
+        monitors: { current: () => [], config: { backlogThreshold: 100 } },
+        alerts: { readAll: async () => [] },
+      } as Partial<ControlDeps>),
+    );
+    const m = await app.inject({ method: 'GET', url: '/api/monitors' });
+    expect(m.statusCode).toBe(200);
+    expect(m.json().config.backlogThreshold).toBe(100);
+    expect((await app.inject({ method: 'GET', url: '/api/alerts' })).statusCode).toBe(200);
+    await app.close();
+  });
+});
+
 describe('control server (job inspector)', () => {
   const config = cfg({ viewerToken: 'v', opsToken: 'o' });
   const inspector = {

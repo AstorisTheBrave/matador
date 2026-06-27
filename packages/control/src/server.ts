@@ -5,6 +5,8 @@ import type { ControlConfig } from './config.js';
 import type { QueueController } from './queues.js';
 import type { QueueActions } from './actions.js';
 import type { JobInspector } from './jobs.js';
+import type { Alert } from './notifier.js';
+import type { MonitorConfig } from './monitors.js';
 import { isApiPath, securityHeaders, SPA_CSP } from './http.js';
 import { KeyedRateLimiter, type RateLimiterOptions } from './ratelimit.js';
 import { tokenMatches } from './security.js';
@@ -18,6 +20,10 @@ export interface ControlDeps {
   ping: () => Promise<boolean>;
   /** Optional job inspector (jobs list/detail/logs + per-job actions). */
   inspector?: JobInspector;
+  /** Optional live monitors: current firing alerts + their config. */
+  monitors?: { current(): Alert[]; config: MonitorConfig };
+  /** Optional alert history reader. */
+  alerts?: { readAll(limit?: number): Promise<Alert[]> };
   rateLimits?: { viewer?: RateLimiterOptions; ops?: RateLimiterOptions };
   /** Directory of the built dashboard SPA to serve. Omit to run API-only. */
   staticDir?: string;
@@ -168,6 +174,23 @@ export function buildControlApp(config: ControlConfig, deps: ControlDeps): Fasti
       deps.actions.drainDlq(name, 'ops', String((req.body as { confirm?: string } | undefined)?.confirm ?? '')),
     ),
   );
+
+  const monitors = deps.monitors;
+  if (monitors !== undefined) {
+    app.get('/api/monitors', async (req, reply) => {
+      if (rateLimited(req, reply, viewerLimiter)) return;
+      if (!authViewer(req)) return reply.code(401).send({ error: 'unauthorized' });
+      return reply.send({ config: monitors.config, active: monitors.current() });
+    });
+  }
+  if (deps.alerts !== undefined) {
+    const alertReader = deps.alerts;
+    app.get('/api/alerts', async (req, reply) => {
+      if (rateLimited(req, reply, viewerLimiter)) return;
+      if (!authViewer(req)) return reply.code(401).send({ error: 'unauthorized' });
+      return reply.send({ alerts: await alertReader.readAll() });
+    });
+  }
 
   // Job inspector: list/detail/logs (viewer) + retry/remove/promote (ops).
   const inspector = deps.inspector;

@@ -12,6 +12,8 @@ import { QueueActions } from './actions.js';
 import { JobInspector } from './jobs.js';
 import { buildControlApp } from './server.js';
 import { discoverQueueNames } from './discovery.js';
+import { AlertLog, MonitorEngine, type MonitorContext } from './monitors.js';
+import { PagerDutyNotifier, SlackNotifier, WebhookNotifier, type Notifier } from './notifier.js';
 
 function log(msg: string): void {
   process.stdout.write(`${msg}\n`);
@@ -37,11 +39,59 @@ async function run(): Promise<void> {
   const controller = new QueueController(queues, { scrapeCacheTtlMs: 5_000 });
   const actions = new QueueActions(queues, audit);
   const inspector = new JobInspector(queues as never, audit);
+
+  // Live monitors + notifications.
+  const notifiers: Notifier[] = [];
+  if (config.slackWebhook) notifiers.push(new SlackNotifier(config.slackWebhook));
+  if (config.pagerDutyKey) notifiers.push(new PagerDutyNotifier(config.pagerDutyKey));
+  if (config.webhookUrl) notifiers.push(new WebhookNotifier(config.webhookUrl));
+  const alertLog = new AlertLog(`${config.statePath}.alerts.jsonl`);
+  const engine = new MonitorEngine(config.monitors, notifiers, alertLog);
+
+  const buildContext = async (): Promise<MonitorContext> => {
+    const list = await controller.list();
+    const qs = await Promise.all(
+      list.map(async (q) => ({
+        name: q.name,
+        counts: q.counts,
+        workers: (await controller.workers(q.name))?.length ?? 0,
+      })),
+    );
+    let reachable = true;
+    let usedMemoryBytes: number | undefined;
+    try {
+      const info = await connection.info('memory');
+      const m = /used_memory:(\d+)/.exec(info);
+      if (m?.[1]) usedMemoryBytes = Number(m[1]);
+    } catch {
+      reachable = false;
+    }
+    const redis: MonitorContext['redis'] = { reachable };
+    if (usedMemoryBytes !== undefined) redis.usedMemoryBytes = usedMemoryBytes;
+    return { queues: qs, redis };
+  };
+
+  let monitorTimer: ReturnType<typeof setInterval> | undefined;
+  if (Object.keys(config.monitors).length > 0) {
+    monitorTimer = setInterval(() => {
+      void (async () => {
+        try {
+          await engine.runOnce(await buildContext());
+        } catch {
+          /* monitors are fail-open */
+        }
+      })();
+    }, config.monitorIntervalMs);
+    monitorTimer.unref();
+  }
+
   const staticDir = fileURLToPath(new URL('./public', import.meta.url));
   const app = buildControlApp(config, {
     controller,
     actions,
     inspector,
+    monitors: { current: () => engine.current(), config: config.monitors },
+    alerts: alertLog,
     ping: async () => {
       try {
         await connection.ping();
@@ -58,6 +108,7 @@ async function run(): Promise<void> {
   log(`Matador control plane on http://${config.host}:${config.port} (${names.length} queues)${ui}`);
 
   const shutdown = (): void => {
+    if (monitorTimer) clearInterval(monitorTimer);
     void (async () => {
       await app.close();
       await lock.release();

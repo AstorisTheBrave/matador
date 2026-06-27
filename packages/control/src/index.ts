@@ -25,6 +25,16 @@ export type { DlqAnalytics, FailureGroup } from './analytics.js';
 export { StuckDetector } from './stuck.js';
 export { JobInspector, JOB_LIST_STATES } from './jobs.js';
 export type { JobSummary, JobDetail, JobTree, JobLike, InspectorQueueLike } from './jobs.js';
+export { MonitorEngine, AlertLog, evaluateBreaches } from './monitors.js';
+export type { MonitorConfig, MonitorContext } from './monitors.js';
+export {
+  SlackNotifier,
+  PagerDutyNotifier,
+  WebhookNotifier,
+  validateWebhookUrl,
+  notifyAll,
+} from './notifier.js';
+export type { Notifier, Alert } from './notifier.js';
 export { QueueActions } from './actions.js';
 export type { QueueOpsLike, JobOpsLike, QueueActionsOptions } from './actions.js';
 export { UnknownQueueError, ConfirmRequiredError } from './errors.js';

@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import type { MonitorConfig } from './monitors.js';
 
 export interface ControlConfig {
   host: string;
@@ -13,6 +14,11 @@ export interface ControlConfig {
   statePath: string;
   /** Max request body size in bytes. */
   maxBodyBytes: number;
+  slackWebhook: string | undefined;
+  pagerDutyKey: string | undefined;
+  webhookUrl: string | undefined;
+  monitorIntervalMs: number;
+  monitors: MonitorConfig;
 }
 
 export type PartialControlConfig = Partial<ControlConfig>;
@@ -26,7 +32,16 @@ const DEFAULTS: ControlConfig = {
   queueAllowlist: undefined,
   statePath: './matador-control-state.json',
   maxBodyBytes: 64 * 1024,
+  slackWebhook: undefined,
+  pagerDutyKey: undefined,
+  webhookUrl: undefined,
+  monitorIntervalMs: 30_000,
+  monitors: {},
 };
+
+function envBool(v: string | undefined): boolean {
+  return v === 'true' || v === '1';
+}
 
 /** Read a token directly or from a *_TOKEN_FILE path. Never logged. */
 function readSecret(value: string | undefined, file: string | undefined): string | undefined {
@@ -65,6 +80,25 @@ export function resolveControlConfig(kwargs: PartialControlConfig = {}): Control
   if (ops !== undefined) fromEnv.opsToken = ops;
   const maxBody = envInt(env.MATADOR_CONTROL_MAX_BODY_BYTES);
   if (maxBody !== undefined) fromEnv.maxBodyBytes = maxBody;
+
+  const slack = readSecret(env.MATADOR_CONTROL_SLACK_WEBHOOK, env.MATADOR_CONTROL_SLACK_WEBHOOK_FILE);
+  if (slack !== undefined) fromEnv.slackWebhook = slack;
+  const pd = readSecret(env.MATADOR_CONTROL_PAGERDUTY_KEY, env.MATADOR_CONTROL_PAGERDUTY_KEY_FILE);
+  if (pd !== undefined) fromEnv.pagerDutyKey = pd;
+  if (env.MATADOR_CONTROL_WEBHOOK_URL) fromEnv.webhookUrl = env.MATADOR_CONTROL_WEBHOOK_URL;
+  const interval = envInt(env.MATADOR_CONTROL_MONITOR_INTERVAL_MS);
+  if (interval !== undefined) fromEnv.monitorIntervalMs = interval;
+
+  const monitors: MonitorConfig = {};
+  const backlog = envInt(env.MATADOR_CONTROL_MONITOR_BACKLOG);
+  if (backlog !== undefined) monitors.backlogThreshold = backlog;
+  const failed = envInt(env.MATADOR_CONTROL_MONITOR_FAILED);
+  if (failed !== undefined) monitors.failedThreshold = failed;
+  const maxMem = envInt(env.MATADOR_CONTROL_MONITOR_MAX_MEMORY);
+  if (maxMem !== undefined) monitors.maxMemoryBytes = maxMem;
+  if (envBool(env.MATADOR_CONTROL_MONITOR_MISSING_WORKERS)) monitors.missingWorkers = true;
+  if (envBool(env.MATADOR_CONTROL_MONITOR_CONNECTION)) monitors.connection = true;
+  if (Object.keys(monitors).length > 0) fromEnv.monitors = monitors;
 
   return { ...DEFAULTS, ...fromEnv, ...kwargs };
 }
