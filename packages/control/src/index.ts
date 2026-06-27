@@ -12,12 +12,19 @@ export type { AuditEntry, AuditAction } from './audit.js';
 export { sanitizeFailedJob, clampPageSize, paginate } from './views.js';
 export type { FailedJobView, Page } from './views.js';
 export { QueueController } from './queues.js';
-export type { QueueLike, QueueDetail, QueueSummary, QueueControllerOptions } from './queues.js';
+export type {
+  QueueLike,
+  QueueDetail,
+  QueueSummary,
+  QueueControllerOptions,
+  WorkerInfo,
+  QueueMetrics,
+} from './queues.js';
 export { normalizeReason, groupFailures } from './analytics.js';
 export type { DlqAnalytics, FailureGroup } from './analytics.js';
 export { StuckDetector } from './stuck.js';
 export { JobInspector, JOB_LIST_STATES } from './jobs.js';
-export type { JobSummary, JobDetail, JobLike, InspectorQueueLike } from './jobs.js';
+export type { JobSummary, JobDetail, JobTree, JobLike, InspectorQueueLike } from './jobs.js';
 export { QueueActions } from './actions.js';
 export type { QueueOpsLike, JobOpsLike, QueueActionsOptions } from './actions.js';
 export { UnknownQueueError, ConfirmRequiredError } from './errors.js';

@@ -116,6 +116,25 @@ export function buildControlApp(config: ControlConfig, deps: ControlDeps): Fasti
     return reply.send(analytics);
   });
 
+  app.get('/api/queues/:name/workers', async (req, reply) => {
+    if (rateLimited(req, reply, viewerLimiter)) return;
+    if (!authViewer(req)) return reply.code(401).send({ error: 'unauthorized' });
+    const { name } = req.params as { name: string };
+    const workers = await deps.controller.workers(name);
+    if (!workers) return reply.code(404).send({ error: 'unknown_queue' });
+    return reply.send({ workers });
+  });
+
+  app.get('/api/queues/:name/metrics', async (req, reply) => {
+    if (rateLimited(req, reply, viewerLimiter)) return;
+    if (!authViewer(req)) return reply.code(401).send({ error: 'unauthorized' });
+    const { name } = req.params as { name: string };
+    const type = (req.query as { type?: string }).type === 'failed' ? 'failed' : 'completed';
+    const metrics = await deps.controller.metrics(name, type);
+    if (!metrics) return reply.code(404).send({ error: 'unknown_queue' });
+    return reply.send(metrics);
+  });
+
   const opsHandler =
     (action: string, run: (name: string, req: FastifyRequest) => Promise<unknown>) =>
     async (req: FastifyRequest, reply: FastifyReply) => {
@@ -182,6 +201,19 @@ export function buildControlApp(config: ControlConfig, deps: ControlDeps): Fasti
       try {
         const job = await inspector.get(name, id);
         return job ? reply.send(job) : notFound(reply);
+      } catch (err) {
+        if (err instanceof UnknownQueueError) return notFound(reply);
+        throw err;
+      }
+    });
+
+    app.get('/api/queues/:name/jobs/:id/tree', async (req, reply) => {
+      if (rateLimited(req, reply, viewerLimiter)) return;
+      if (!authViewer(req)) return reply.code(401).send({ error: 'unauthorized' });
+      const { name, id } = req.params as { name: string; id: string };
+      try {
+        const tree = await inspector.tree(name, id);
+        return tree ? reply.send(tree) : notFound(reply);
       } catch (err) {
         if (err instanceof UnknownQueueError) return notFound(reply);
         throw err;

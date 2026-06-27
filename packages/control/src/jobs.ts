@@ -14,10 +14,12 @@ export interface JobLike {
   processedOn?: number;
   finishedOn?: number;
   failedReason?: string;
+  parent?: { id: string; queueKey?: string };
   getState(): Promise<string>;
   retry(state?: string): Promise<void>;
   remove(): Promise<void>;
   promote(): Promise<void>;
+  getDependenciesCount?(): Promise<{ processed?: number; unprocessed?: number }>;
 }
 
 export interface InspectorQueueLike {
@@ -44,6 +46,13 @@ export interface JobDetail extends JobSummary {
   progress: unknown;
   returnvalue: unknown;
   stacktrace: string[];
+}
+
+export interface JobTree {
+  id: string;
+  name: string;
+  parent: { id: string } | undefined;
+  children: { processed: number; unprocessed: number };
 }
 
 export const JOB_LIST_STATES = [
@@ -137,6 +146,20 @@ export class JobInspector {
       progress: job.progress,
       returnvalue: bounded(job.returnvalue),
       stacktrace: Array.isArray(job.stacktrace) ? job.stacktrace.slice(0, 20) : [],
+    };
+  }
+
+  /** The flow position of a job: its parent (if any) and child counts. */
+  async tree(queue: string, id: string): Promise<JobTree | undefined> {
+    const q = this.require(queue);
+    const job = await q.getJob(id);
+    if (!job) return undefined;
+    const deps = job.getDependenciesCount ? await job.getDependenciesCount() : {};
+    return {
+      id: String(job.id ?? ''),
+      name: job.name,
+      parent: job.parent ? { id: job.parent.id } : undefined,
+      children: { processed: deps.processed ?? 0, unprocessed: deps.unprocessed ?? 0 },
     };
   }
 

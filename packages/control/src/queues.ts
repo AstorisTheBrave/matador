@@ -7,6 +7,37 @@ export interface QueueLike {
   name: string;
   getJobCounts(...types: string[]): Promise<Record<string, number>>;
   getFailed(start: number, end: number): Promise<unknown[]>;
+  getWorkers?(): Promise<unknown[]>;
+  getMetrics?(
+    type: string,
+    start?: number,
+    end?: number,
+  ): Promise<{ data?: number[]; count?: number; meta?: unknown }>;
+}
+
+export interface WorkerInfo {
+  name: string;
+  addr: string | undefined;
+  age: number | undefined;
+  idle: number | undefined;
+}
+
+export interface QueueMetrics {
+  type: 'completed' | 'failed';
+  /** Per-minute counts, most recent last. */
+  data: number[];
+  /** Total since metrics collection started. */
+  count: number;
+}
+
+function sanitizeWorker(w: unknown): WorkerInfo {
+  const o = (w ?? {}) as Record<string, unknown>;
+  return {
+    name: String(o.name ?? ''),
+    addr: typeof o.addr === 'string' ? o.addr : undefined,
+    age: typeof o.age === 'number' ? o.age : undefined,
+    idle: typeof o.idle === 'number' ? o.idle : undefined,
+  };
 }
 
 export interface QueueSummary {
@@ -98,6 +129,28 @@ export class QueueController {
     const failed = await queue.getFailed(0, this.dlqSampleLimit - 1);
     const dlqSample = failed.slice(0, this.dlqSampleLimit).map((j) => sanitizeFailedJob(j as never));
     return { name, counts, stuck: this.stuck.isStuck(name), dlqSample };
+  }
+
+  /** List the workers attached to a queue (bounded). */
+  async workers(name: string): Promise<WorkerInfo[] | undefined> {
+    const queue = this.queues.get(name);
+    if (!queue) return undefined;
+    if (!queue.getWorkers) return [];
+    const ws = await queue.getWorkers();
+    return ws.slice(0, 200).map(sanitizeWorker);
+  }
+
+  /** Per-minute completed/failed counts from BullMQ's stored metrics. */
+  async metrics(name: string, type: 'completed' | 'failed'): Promise<QueueMetrics | undefined> {
+    const queue = this.queues.get(name);
+    if (!queue) return undefined;
+    if (!queue.getMetrics) return { type, data: [], count: 0 };
+    const m = await queue.getMetrics(type);
+    return {
+      type,
+      data: Array.isArray(m.data) ? m.data.slice(-1440) : [],
+      count: typeof m.count === 'number' ? m.count : 0,
+    };
   }
 
   /** Group the dead-letter queue by normalized failure reason (bounded sample). */
