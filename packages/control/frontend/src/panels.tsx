@@ -9,10 +9,69 @@ const JOB_STATES = ['failed', 'waiting', 'active', 'delayed', 'completed'] as co
 export function JobsPanel({ api, queue }: { api: Api; queue: string }) {
   const [state, setState] = useState<string>('failed');
   const [selected, setSelected] = useState<string | undefined>();
+  const [adding, setAdding] = useState(false);
+  const [addName, setAddName] = useState('');
+  const [addData, setAddData] = useState('{}');
+  const [busy, setBusy] = useState(false);
   const jobs = usePolling<JobsPage>(() => api.listJobs(queue, state), 4000, `${queue}:${state}`);
+
+  const submitAdd = async () => {
+    setBusy(true);
+    try {
+      await api.addJob(queue, addName || 'job', JSON.parse(addData || '{}'));
+      setAdding(false);
+      setAddName('');
+      setAddData('{}');
+      await jobs.refresh();
+    } catch {
+      /* invalid JSON or error: keep the form open */
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <div>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 'var(--space-3)', alignItems: 'center' }}>
+        <Button onClick={() => setAdding((v) => !v)}>+ Add job</Button>
+        {state === 'delayed' ? (
+          <Button
+            disabled={busy}
+            onClick={() => {
+              setBusy(true);
+              void api.promoteDelayed(queue).finally(() => {
+                setBusy(false);
+                void jobs.refresh();
+              });
+            }}
+          >
+            Promote all delayed
+          </Button>
+        ) : null}
+      </div>
+
+      {adding ? (
+        <div style={{ marginBottom: 'var(--space-3)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <input
+            value={addName}
+            onChange={(e) => setAddName(e.target.value)}
+            placeholder="job name"
+            style={{ font: 'inherit', fontSize: 'var(--text-caption)', padding: '6px 8px', borderRadius: 'var(--radius-sm)', border: 'var(--border-hairline) solid var(--glass-border, rgba(255,255,255,0.16))', background: 'var(--surface-bg)', color: 'var(--text-primary)' }}
+          />
+          <textarea
+            value={addData}
+            onChange={(e) => setAddData(e.target.value)}
+            spellCheck={false}
+            placeholder="job data (JSON)"
+            style={{ minHeight: 80, font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--text-caption)', padding: 8, borderRadius: 'var(--radius-sm)', border: 'var(--border-hairline) solid var(--glass-border, rgba(255,255,255,0.16))', background: 'var(--surface-bg)', color: 'var(--text-primary)' }}
+          />
+          <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+            <Button onClick={() => setAdding(false)}>Cancel</Button>
+            <Button variant="primary" disabled={busy} onClick={() => void submitAdd()}>Add</Button>
+          </div>
+        </div>
+      ) : null}
+
       <div style={{ display: 'flex', gap: 6, marginBottom: 'var(--space-3)' }}>
         {JOB_STATES.map((s) => (
           <button
@@ -92,14 +151,28 @@ function JobDetailCard({
   const logs = usePolling<{ logs: string[] }>(() => api.jobLogs(queue, id), 8000, `${queue}:${id}:logs`);
   const tree = usePolling(() => api.jobTree(queue, id), 12000, `${queue}:${id}:tree`);
   const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState<string | undefined>();
 
-  const act = async (action: 'retry' | 'remove' | 'promote') => {
+  const act = async (action: 'retry' | 'remove' | 'promote' | 'discard' | 'clone') => {
     setBusy(true);
     try {
       await api.jobAction(queue, id, action);
       onChanged();
-      if (action === 'remove') onClose();
+      if (action === 'remove' || action === 'discard') onClose();
       else await job.refresh();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const saveEdit = async () => {
+    setBusy(true);
+    try {
+      await api.jobEdit(queue, id, JSON.parse(editing ?? '{}'));
+      setEditing(undefined);
+      await job.refresh();
+    } catch {
+      /* invalid JSON: keep the editor open */
     } finally {
       setBusy(false);
     }
@@ -109,13 +182,31 @@ function JobDetailCard({
     <div style={{ marginTop: 'var(--space-4)', padding: 'var(--space-4)', borderRadius: 'var(--radius-md)', border: 'var(--border-hairline) solid var(--glass-border, rgba(255,255,255,0.12))', background: 'var(--surface-elevated)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
         <Eyebrow>Job {id}</Eyebrow>
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           <Button disabled={busy} onClick={() => void act('retry')}>Retry</Button>
           <Button disabled={busy} onClick={() => void act('promote')}>Promote</Button>
+          <Button disabled={busy} onClick={() => void act('clone')}>Clone</Button>
+          <Button disabled={busy} onClick={() => setEditing(JSON.stringify(job.data?.data ?? {}, null, 2))}>Edit data</Button>
+          <Button disabled={busy} onClick={() => void act('discard')}>Discard</Button>
           <Button variant="danger" disabled={busy} onClick={() => void act('remove')}>Remove</Button>
           <Button onClick={onClose}>Close</Button>
         </div>
       </div>
+
+      {editing !== undefined ? (
+        <div style={{ marginTop: 'var(--space-3)' }}>
+          <textarea
+            value={editing}
+            onChange={(e) => setEditing(e.target.value)}
+            spellCheck={false}
+            style={{ width: '100%', minHeight: 120, font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--text-caption)', padding: 8, borderRadius: 'var(--radius-sm)', border: 'var(--border-hairline) solid var(--glass-border, rgba(255,255,255,0.16))', background: 'var(--surface-bg)', color: 'var(--text-primary)' }}
+          />
+          <div style={{ display: 'flex', gap: 6, marginTop: 6, justifyContent: 'flex-end' }}>
+            <Button onClick={() => setEditing(undefined)}>Cancel</Button>
+            <Button variant="primary" disabled={busy} onClick={() => void saveEdit()}>Save data</Button>
+          </div>
+        </div>
+      ) : null}
       {job.data ? (
         <div style={{ marginTop: 'var(--space-3)', fontSize: 'var(--text-caption)' }}>
           <p style={{ color: 'var(--text-tertiary)', margin: '4px 0' }}>state · {job.data.state} · attempts {job.data.attemptsMade}</p>
@@ -149,7 +240,7 @@ function Field({ label, value }: { label: string; value: unknown }) {
 }
 
 function Sparkline({ data, color }: { data: number[]; color: string }) {
-  const recent = data.slice(-60);
+  const recent = data.length > 0 ? data : [0];
   const max = Math.max(1, ...recent);
   const w = 360;
   const h = 48;
@@ -162,25 +253,45 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
   );
 }
 
+const RANGES: { label: string; minutes: number }[] = [
+  { label: '1h', minutes: 60 },
+  { label: '6h', minutes: 360 },
+  { label: '24h', minutes: 1440 },
+];
+
 export function MetricsPanel({ api, queue }: { api: Api; queue: string }) {
+  const [range, setRange] = useState(60);
   const completed = usePolling<{ data: number[]; count: number }>(() => api.metrics(queue, 'completed'), 10000, `${queue}:mc`);
   const failed = usePolling<{ data: number[]; count: number }>(() => api.metrics(queue, 'failed'), 10000, `${queue}:mf`);
-  const sum = (d?: number[]) => (d ? d.slice(-60).reduce((a, b) => a + b, 0) : 0);
+  const slice = (d?: number[]) => (d ? d.slice(-range) : []);
+  const sum = (d?: number[]) => slice(d).reduce((a, b) => a + b, 0);
+  const label = RANGES.find((r) => r.minutes === range)?.label ?? '1h';
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+      <div style={{ display: 'flex', gap: 6 }}>
+        {RANGES.map((r) => (
+          <button
+            key={r.minutes}
+            onClick={() => setRange(r.minutes)}
+            style={{ font: 'inherit', fontSize: 'var(--text-caption)', padding: '2px 10px', borderRadius: 'var(--radius-full)', border: 'var(--border-hairline) solid var(--glass-border, rgba(255,255,255,0.12))', background: r.minutes === range ? 'var(--surface-overlay)' : 'transparent', color: r.minutes === range ? 'var(--text-primary)' : 'var(--text-tertiary)', cursor: 'pointer' }}
+          >
+            {r.label}
+          </button>
+        ))}
+      </div>
       <div>
         <Eyebrow>Completed · per minute</Eyebrow>
         <p style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-caption)', margin: '4px 0' }}>
-          {sum(completed.data?.data)} in the last hour · {completed.data?.count ?? 0} total
+          {sum(completed.data?.data)} in the last {label} · {completed.data?.count ?? 0} total
         </p>
-        <Sparkline data={completed.data?.data ?? []} color="var(--status-success)" />
+        <Sparkline data={slice(completed.data?.data)} color="var(--status-success)" />
       </div>
       <div>
         <Eyebrow>Failed · per minute</Eyebrow>
         <p style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-caption)', margin: '4px 0' }}>
-          {sum(failed.data?.data)} in the last hour · {failed.data?.count ?? 0} total
+          {sum(failed.data?.data)} in the last {label} · {failed.data?.count ?? 0} total
         </p>
-        <Sparkline data={failed.data?.data ?? []} color="var(--status-error)" />
+        <Sparkline data={slice(failed.data?.data)} color="var(--status-error)" />
       </div>
       {completed.data && completed.data.data.length === 0 ? (
         <p style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-caption)' }}>

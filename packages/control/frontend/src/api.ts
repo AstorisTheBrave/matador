@@ -109,10 +109,30 @@ export class Api {
     return this.req(`/api/queues/${encodeURIComponent(name)}/jobs/${encodeURIComponent(id)}/logs`);
   }
 
-  jobAction(name: string, id: string, action: 'retry' | 'remove' | 'promote'): Promise<{ ok: boolean }> {
+  jobAction(name: string, id: string, action: 'retry' | 'remove' | 'promote' | 'discard' | 'clone'): Promise<{ ok: boolean; id?: string }> {
     return this.req(`/api/queues/${encodeURIComponent(name)}/jobs/${encodeURIComponent(id)}/${action}`, {
       method: 'POST',
     });
+  }
+
+  jobEdit(name: string, id: string, data: unknown): Promise<{ ok: boolean }> {
+    return this.req(`/api/queues/${encodeURIComponent(name)}/jobs/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data }),
+    });
+  }
+
+  addJob(name: string, jobName: string, data: unknown, opts?: unknown): Promise<{ ok: boolean; id?: string }> {
+    return this.req(`/api/queues/${encodeURIComponent(name)}/jobs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: jobName, data, opts }),
+    });
+  }
+
+  promoteDelayed(name: string): Promise<{ promoted: number }> {
+    return this.req(`/api/queues/${encodeURIComponent(name)}/promote-delayed`, { method: 'POST' });
   }
 
   alerts(): Promise<{ alerts: Alert[] }> {
