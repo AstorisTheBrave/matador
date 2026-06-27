@@ -12,6 +12,60 @@ export interface JobCounts {
 export interface QueueSummary {
   name: string;
   counts: JobCounts;
+  stuck: boolean;
+}
+
+export interface JobSummary {
+  id: string;
+  name: string;
+  attemptsMade: number;
+  timestamp: number;
+  processedOn?: number;
+  finishedOn?: number;
+  failedReason?: string;
+}
+
+export interface JobDetail extends JobSummary {
+  state: string;
+  data: unknown;
+  opts: unknown;
+  progress: unknown;
+  returnvalue: unknown;
+  stacktrace: string[];
+}
+
+export interface JobsPage {
+  items: JobSummary[];
+  page: number;
+  pageSize: number;
+}
+
+export interface WorkerInfo {
+  name: string;
+  addr?: string;
+  age?: number;
+  idle?: number;
+}
+
+export interface FailureGroup {
+  reason: string;
+  count: number;
+  sampleId: string;
+}
+
+export interface DlqAnalytics {
+  total: number;
+  distinct: number;
+  groups: FailureGroup[];
+}
+
+export interface Alert {
+  ts: string;
+  monitor: string;
+  severity: 'warning' | 'critical';
+  queue?: string;
+  message: string;
+  resolved: boolean;
 }
 
 export interface FailedJobView {
@@ -27,6 +81,7 @@ export interface FailedJobView {
 export interface QueueDetail {
   name: string;
   counts: JobCounts;
+  stuck: boolean;
   dlqSample: FailedJobView[];
 }
 

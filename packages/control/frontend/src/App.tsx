@@ -1,7 +1,37 @@
 import { useMemo, useState } from 'react';
 import { Api } from './api.js';
 import { Dashboard } from './Dashboard.js';
+import { usePolling } from './useSnapshot.js';
+import type { Alert } from './types.js';
 import { Eyebrow } from './ui.js';
+
+function AlertsBanner({ api }: { api: Api }) {
+  const m = usePolling<{ active: Alert[] }>(() => api.monitors(), 5000, 'monitors');
+  const active = m.data?.active ?? [];
+  if (active.length === 0) return null;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 'var(--space-4)' }}>
+      {active.map((a, i) => (
+        <div
+          key={i}
+          className="matador-glass matador-glass--flat"
+          style={{
+            padding: '8px 14px',
+            borderRadius: 'var(--radius-md)',
+            borderLeft: `3px solid ${a.severity === 'critical' ? 'var(--status-error)' : 'var(--status-warning)'}`,
+            fontSize: 'var(--text-caption)',
+            color: 'var(--text-secondary)',
+          }}
+        >
+          <strong style={{ color: a.severity === 'critical' ? 'var(--status-error)' : 'var(--status-warning)' }}>
+            {a.severity}
+          </strong>{' '}
+          · {a.message}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function App() {
   const api = useMemo(() => new Api(), []);
@@ -48,6 +78,7 @@ export function App() {
         </label>
       </header>
 
+      <AlertsBanner api={api} />
       <Dashboard api={api} />
 
       <footer style={{ marginTop: 'var(--space-6)', textAlign: 'center' }}>

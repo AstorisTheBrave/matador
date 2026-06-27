@@ -4,6 +4,10 @@ import { usePolling } from './useSnapshot.js';
 import type { QueueDetail, QueuesPage } from './types.js';
 import { STATE_ORDER } from './types.js';
 import { Button, Eyebrow, Mono, StatePill } from './ui.js';
+import { JobsPanel, WorkersPanel, DlqPanel } from './panels.js';
+
+type Tab = 'overview' | 'jobs' | 'workers' | 'dlq';
+const TABS: Tab[] = ['overview', 'jobs', 'workers', 'dlq'];
 
 function backlog(c: QueueDetail['counts']): number {
   return c.waiting + c.delayed + c.prioritized;
@@ -50,6 +54,7 @@ export function Dashboard({ api }: { api: Api }) {
                     {q.name}
                   </span>
                   <Mono style={{ color: q.counts.failed > 0 ? 'var(--status-error)' : 'var(--text-tertiary)' }}>
+                    {q.stuck ? 'stuck · ' : ''}
                     {backlog(q.counts).toLocaleString()}
                     {q.counts.paused > 0 ? ' · paused' : ''}
                   </Mono>
@@ -81,6 +86,7 @@ function QueueDetailView({
   onChanged: () => void;
 }) {
   const detail = usePolling<QueueDetail>(() => api.getQueue(name), 3000, name);
+  const [tab, setTab] = useState<Tab>('overview');
   const [busy, setBusy] = useState<string>();
   const [confirmDrain, setConfirmDrain] = useState(false);
   const [confirmText, setConfirmText] = useState('');
@@ -149,39 +155,38 @@ function QueueDetailView({
       </div>
 
       <div style={{ marginTop: 'var(--space-5)' }}>
-        <Eyebrow>Dead letter · sample</Eyebrow>
-        <div style={{ marginTop: 'var(--space-3)' }}>
-          {detail.data && detail.data.dlqSample.length > 0 ? (
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-caption)' }}>
-              <thead>
-                <tr style={{ color: 'var(--text-tertiary)', textAlign: 'left' }}>
-                  <th style={{ padding: '4px 8px', fontWeight: 500 }}>id</th>
-                  <th style={{ padding: '4px 8px', fontWeight: 500 }}>name</th>
-                  <th style={{ padding: '4px 8px', fontWeight: 500 }}>attempts</th>
-                  <th style={{ padding: '4px 8px', fontWeight: 500 }}>reason</th>
-                </tr>
-              </thead>
-              <tbody>
-                {detail.data.dlqSample.map((j) => (
-                  <tr key={j.id} style={{ borderTop: 'var(--border-hairline) solid var(--glass-border, rgba(255,255,255,0.08))' }}>
-                    <td style={{ padding: '6px 8px' }}>
-                      <Mono>{j.id}</Mono>
-                    </td>
-                    <td style={{ padding: '6px 8px', color: 'var(--text-secondary)' }}>{j.name}</td>
-                    <td style={{ padding: '6px 8px' }}>
-                      <Mono>{j.attemptsMade}</Mono>
-                    </td>
-                    <td style={{ padding: '6px 8px', color: 'var(--text-secondary)', maxWidth: 360, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {j.failedReason}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-caption)' }}>No failed jobs.</p>
-          )}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 'var(--space-4)' }}>
+          {TABS.map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              style={{
+                font: 'inherit',
+                fontSize: 'var(--text-label)',
+                padding: '4px 12px',
+                borderRadius: 'var(--radius-md)',
+                border: 'none',
+                borderBottom: `2px solid ${t === tab ? 'var(--accent-primary)' : 'transparent'}`,
+                background: 'transparent',
+                color: t === tab ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                cursor: 'pointer',
+              }}
+            >
+              {t === 'dlq' ? 'dead letter' : t}
+            </button>
+          ))}
         </div>
+        {tab === 'overview' ? (
+          <p style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-caption)' }}>
+            Use the tabs to inspect jobs, see attached workers, and analyze the dead-letter queue.
+          </p>
+        ) : tab === 'jobs' ? (
+          <JobsPanel api={api} queue={name} />
+        ) : tab === 'workers' ? (
+          <WorkersPanel api={api} queue={name} />
+        ) : (
+          <DlqPanel api={api} queue={name} />
+        )}
       </div>
 
       {confirmDrain ? (

@@ -1,4 +1,12 @@
-import type { QueueDetail, QueuesPage } from './types.js';
+import type {
+  Alert,
+  DlqAnalytics,
+  JobDetail,
+  JobsPage,
+  QueueDetail,
+  QueuesPage,
+  WorkerInfo,
+} from './types.js';
 
 export class ApiError extends Error {
   constructor(
@@ -62,5 +70,44 @@ export class Api {
   }
   drainDlq(name: string, confirm: string): Promise<{ removed: number }> {
     return this.post(name, 'drain-dlq', { confirm });
+  }
+
+  dlqAnalytics(name: string): Promise<DlqAnalytics> {
+    return this.req<DlqAnalytics>(`/api/queues/${encodeURIComponent(name)}/dlq/analytics`);
+  }
+
+  workers(name: string): Promise<{ workers: WorkerInfo[] }> {
+    return this.req<{ workers: WorkerInfo[] }>(`/api/queues/${encodeURIComponent(name)}/workers`);
+  }
+
+  metrics(name: string, type: 'completed' | 'failed'): Promise<{ type: string; data: number[]; count: number }> {
+    return this.req(`/api/queues/${encodeURIComponent(name)}/metrics?type=${type}`);
+  }
+
+  listJobs(name: string, state: string, page = 1, pageSize = 25): Promise<JobsPage> {
+    const e = encodeURIComponent;
+    return this.req<JobsPage>(`/api/queues/${e(name)}/jobs?state=${e(state)}&page=${page}&pageSize=${pageSize}`);
+  }
+
+  getJob(name: string, id: string): Promise<JobDetail> {
+    return this.req<JobDetail>(`/api/queues/${encodeURIComponent(name)}/jobs/${encodeURIComponent(id)}`);
+  }
+
+  jobLogs(name: string, id: string): Promise<{ logs: string[]; count: number }> {
+    return this.req(`/api/queues/${encodeURIComponent(name)}/jobs/${encodeURIComponent(id)}/logs`);
+  }
+
+  jobAction(name: string, id: string, action: 'retry' | 'remove' | 'promote'): Promise<{ ok: boolean }> {
+    return this.req(`/api/queues/${encodeURIComponent(name)}/jobs/${encodeURIComponent(id)}/${action}`, {
+      method: 'POST',
+    });
+  }
+
+  alerts(): Promise<{ alerts: Alert[] }> {
+    return this.req<{ alerts: Alert[] }>('/api/alerts');
+  }
+
+  monitors(): Promise<{ config: Record<string, unknown>; active: Alert[] }> {
+    return this.req('/api/monitors');
   }
 }
