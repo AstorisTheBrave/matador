@@ -1,9 +1,16 @@
 {
   "name": "@matadormq/alerts",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Generate Prometheus alert rules, SLO burn-rate rules, and a Grafana dashboard for Matador metrics.",
   "license": "AGPL-3.0-only",
-  "keywords": ["bullmq", "prometheus", "grafana", "slo", "alerting", "observability"],
+  "keywords": [
+    "bullmq",
+    "prometheus",
+    "grafana",
+    "slo",
+    "alerting",
+    "observability"
+  ],
   "homepage": "https://github.com/AstorisTheBrave/matador#readme",
   "bugs": "https://github.com/AstorisTheBrave/matador/issues",
   "repository": {
@@ -16,12 +23,17 @@
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" }
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   },
   "bin": {
     "matador-alerts": "./dist/cli.js"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup"
   },
