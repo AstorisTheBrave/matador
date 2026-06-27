@@ -4,6 +4,7 @@ import { Counter, Gauge, Registry } from 'prom-client';
 import type { ControlConfig } from './config.js';
 import type { QueueController } from './queues.js';
 import type { QueueActions } from './actions.js';
+import type { JobInspector } from './jobs.js';
 import { isApiPath, securityHeaders, SPA_CSP } from './http.js';
 import { KeyedRateLimiter, type RateLimiterOptions } from './ratelimit.js';
 import { tokenMatches } from './security.js';
@@ -15,6 +16,8 @@ export interface ControlDeps {
   actions: QueueActions;
   /** Redis readiness probe. */
   ping: () => Promise<boolean>;
+  /** Optional job inspector (jobs list/detail/logs + per-job actions). */
+  inspector?: JobInspector;
   rateLimits?: { viewer?: RateLimiterOptions; ops?: RateLimiterOptions };
   /** Directory of the built dashboard SPA to serve. Omit to run API-only. */
   staticDir?: string;
@@ -146,6 +149,78 @@ export function buildControlApp(config: ControlConfig, deps: ControlDeps): Fasti
       deps.actions.drainDlq(name, 'ops', String((req.body as { confirm?: string } | undefined)?.confirm ?? '')),
     ),
   );
+
+  // Job inspector: list/detail/logs (viewer) + retry/remove/promote (ops).
+  const inspector = deps.inspector;
+  if (inspector !== undefined) {
+    const notFound = (reply: FastifyReply) => reply.code(404).send({ error: 'not_found' });
+
+    app.get('/api/queues/:name/jobs', async (req, reply) => {
+      if (rateLimited(req, reply, viewerLimiter)) return;
+      if (!authViewer(req)) return reply.code(401).send({ error: 'unauthorized' });
+      const { name } = req.params as { name: string };
+      const q = req.query as { state?: string; page?: string; pageSize?: string };
+      try {
+        return reply.send(
+          await inspector.list(
+            name,
+            q.state ?? 'failed',
+            q.page ? Number(q.page) : 1,
+            q.pageSize ? Number(q.pageSize) : 25,
+          ),
+        );
+      } catch (err) {
+        if (err instanceof UnknownQueueError) return notFound(reply);
+        throw err;
+      }
+    });
+
+    app.get('/api/queues/:name/jobs/:id', async (req, reply) => {
+      if (rateLimited(req, reply, viewerLimiter)) return;
+      if (!authViewer(req)) return reply.code(401).send({ error: 'unauthorized' });
+      const { name, id } = req.params as { name: string; id: string };
+      try {
+        const job = await inspector.get(name, id);
+        return job ? reply.send(job) : notFound(reply);
+      } catch (err) {
+        if (err instanceof UnknownQueueError) return notFound(reply);
+        throw err;
+      }
+    });
+
+    app.get('/api/queues/:name/jobs/:id/logs', async (req, reply) => {
+      if (rateLimited(req, reply, viewerLimiter)) return;
+      if (!authViewer(req)) return reply.code(401).send({ error: 'unauthorized' });
+      const { name, id } = req.params as { name: string; id: string };
+      const q = req.query as { page?: string; pageSize?: string };
+      try {
+        return reply.send(await inspector.logs(name, id, q.page ? Number(q.page) : 1));
+      } catch (err) {
+        if (err instanceof UnknownQueueError) return notFound(reply);
+        throw err;
+      }
+    });
+
+    const jobAction = (action: 'retry' | 'remove' | 'promote') =>
+      async (req: FastifyRequest, reply: FastifyReply) => {
+        if (rateLimited(req, reply, opsLimiter)) return;
+        if (!authViewer(req)) return reply.code(401).send({ error: 'unauthorized' });
+        if (!authOps(req)) return reply.code(403).send({ error: 'forbidden' });
+        const { name, id } = req.params as { name: string; id: string };
+        try {
+          const result = await inspector[action](name, id, 'ops');
+          if (!result.ok) return notFound(reply);
+          actions.inc({ action: `${action}-job` });
+          return reply.send(result);
+        } catch (err) {
+          if (err instanceof UnknownQueueError) return notFound(reply);
+          throw err;
+        }
+      };
+    app.post('/api/queues/:name/jobs/:id/retry', jobAction('retry'));
+    app.post('/api/queues/:name/jobs/:id/remove', jobAction('remove'));
+    app.post('/api/queues/:name/jobs/:id/promote', jobAction('promote'));
+  }
 
   // Serve the dashboard SPA (open: it carries no data; the API behind it is gated).
   if (deps.staticDir !== undefined) {

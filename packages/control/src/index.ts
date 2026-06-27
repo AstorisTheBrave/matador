@@ -16,6 +16,8 @@ export type { QueueLike, QueueDetail, QueueSummary, QueueControllerOptions } fro
 export { normalizeReason, groupFailures } from './analytics.js';
 export type { DlqAnalytics, FailureGroup } from './analytics.js';
 export { StuckDetector } from './stuck.js';
+export { JobInspector, JOB_LIST_STATES } from './jobs.js';
+export type { JobSummary, JobDetail, JobLike, InspectorQueueLike } from './jobs.js';
 export { QueueActions } from './actions.js';
 export type { QueueOpsLike, JobOpsLike, QueueActionsOptions } from './actions.js';
 export { UnknownQueueError, ConfirmRequiredError } from './errors.js';

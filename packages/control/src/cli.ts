@@ -9,6 +9,7 @@ import { StateLock } from './lock.js';
 import { AuditLog } from './audit.js';
 import { QueueController } from './queues.js';
 import { QueueActions } from './actions.js';
+import { JobInspector } from './jobs.js';
 import { buildControlApp } from './server.js';
 import { discoverQueueNames } from './discovery.js';
 
@@ -35,10 +36,12 @@ async function run(): Promise<void> {
 
   const controller = new QueueController(queues, { scrapeCacheTtlMs: 5_000 });
   const actions = new QueueActions(queues, audit);
+  const inspector = new JobInspector(queues as never, audit);
   const staticDir = fileURLToPath(new URL('./public', import.meta.url));
   const app = buildControlApp(config, {
     controller,
     actions,
+    inspector,
     ping: async () => {
       try {
         await connection.ping();

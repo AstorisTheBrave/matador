@@ -1,6 +1,13 @@
 import { appendFile, readFile } from 'node:fs/promises';
 
-export type AuditAction = 'pause' | 'resume' | 'retry-failed' | 'drain-dlq';
+export type AuditAction =
+  | 'pause'
+  | 'resume'
+  | 'retry-failed'
+  | 'drain-dlq'
+  | 'retry-job'
+  | 'remove-job'
+  | 'promote-job';
 
 export interface AuditEntry {
   /** Server-stamped ISO timestamp (never trusted from the client). */

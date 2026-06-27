@@ -129,6 +129,36 @@ describe('control server (limits and probes)', () => {
   });
 });
 
+describe('control server (job inspector)', () => {
+  const config = cfg({ viewerToken: 'v', opsToken: 'o' });
+  const inspector = {
+    list: async (q: string) =>
+      q === 'emails' ? { items: [{ id: '1' }], page: 1, pageSize: 25 } : Promise.reject(new Error()),
+    get: async (_q: string, id: string) => (id === '1' ? { id, state: 'failed' } : undefined),
+    logs: async () => ({ logs: ['l'], count: 1 }),
+    retry: async (_q: string, id: string) => ({ ok: id === '1' }),
+    remove: async () => ({ ok: true }),
+    promote: async () => ({ ok: true }),
+  } as unknown as ControlDeps['inspector'];
+
+  it('serves jobs list/detail/logs (viewer) and gates actions (ops)', async () => {
+    const app = buildControlApp(config, deps({ inspector }));
+    const v = { authorization: 'Bearer v' };
+    const o = { authorization: 'Bearer o' };
+
+    expect((await app.inject({ url: '/api/queues/emails/jobs?state=failed', headers: v })).statusCode).toBe(200);
+    expect((await app.inject({ url: '/api/queues/emails/jobs/1', headers: v })).statusCode).toBe(200);
+    expect((await app.inject({ url: '/api/queues/emails/jobs/zzz', headers: v })).statusCode).toBe(404);
+    expect((await app.inject({ url: '/api/queues/emails/jobs/1/logs', headers: v })).statusCode).toBe(200);
+
+    // viewer cannot act; ops can; missing job -> 404
+    expect((await app.inject({ method: 'POST', url: '/api/queues/emails/jobs/1/retry', headers: v })).statusCode).toBe(403);
+    expect((await app.inject({ method: 'POST', url: '/api/queues/emails/jobs/1/retry', headers: o })).statusCode).toBe(200);
+    expect((await app.inject({ method: 'POST', url: '/api/queues/emails/jobs/zzz/retry', headers: o })).statusCode).toBe(404);
+    await app.close();
+  });
+});
+
 describe('control server (static dashboard)', () => {
   let dir: string | undefined;
   afterEach(async () => {
