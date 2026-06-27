@@ -15,3 +15,6 @@ MEMORY.md
 .mcp.json
 archive/
 docs/
+
+# local mock-data playground (not committed)
+/playground/
