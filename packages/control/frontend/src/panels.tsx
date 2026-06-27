@@ -90,6 +90,7 @@ function JobDetailCard({
 }) {
   const job = usePolling<JobDetail>(() => api.getJob(queue, id), 8000, `${queue}:${id}`);
   const logs = usePolling<{ logs: string[] }>(() => api.jobLogs(queue, id), 8000, `${queue}:${id}:logs`);
+  const tree = usePolling(() => api.jobTree(queue, id), 12000, `${queue}:${id}:tree`);
   const [busy, setBusy] = useState(false);
 
   const act = async (action: 'retry' | 'remove' | 'promote') => {
@@ -118,6 +119,12 @@ function JobDetailCard({
       {job.data ? (
         <div style={{ marginTop: 'var(--space-3)', fontSize: 'var(--text-caption)' }}>
           <p style={{ color: 'var(--text-tertiary)', margin: '4px 0' }}>state · {job.data.state} · attempts {job.data.attemptsMade}</p>
+          {tree.data && (tree.data.parent || tree.data.children.processed + tree.data.children.unprocessed > 0) ? (
+            <p style={{ color: 'var(--text-tertiary)', margin: '4px 0' }}>
+              flow · {tree.data.parent ? `parent ${tree.data.parent.id} · ` : ''}
+              {tree.data.children.processed} processed / {tree.data.children.unprocessed} pending children
+            </p>
+          ) : null}
           <Field label="data" value={job.data.data} />
           <Field label="opts" value={job.data.opts} />
           {job.data.stacktrace.length > 0 ? <Field label="stacktrace" value={job.data.stacktrace} /> : null}
@@ -137,6 +144,49 @@ function Field({ label, value }: { label: string; value: unknown }) {
       <pre className="matador-mono" style={{ margin: '2px 0 0', padding: '8px', borderRadius: 'var(--radius-sm)', background: 'var(--surface-bg)', color: 'var(--text-secondary)', overflow: 'auto', maxHeight: 200, fontSize: 'var(--text-caption)' }}>
         {typeof value === 'string' ? value : JSON.stringify(value, null, 2)}
       </pre>
+    </div>
+  );
+}
+
+function Sparkline({ data, color }: { data: number[]; color: string }) {
+  const recent = data.slice(-60);
+  const max = Math.max(1, ...recent);
+  const w = 360;
+  const h = 48;
+  const step = recent.length > 1 ? w / (recent.length - 1) : w;
+  const points = recent.map((v, i) => `${(i * step).toFixed(1)},${(h - (v / max) * h).toFixed(1)}`).join(' ');
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{ maxWidth: '100%' }}>
+      <polyline points={points} fill="none" stroke={color} strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+export function MetricsPanel({ api, queue }: { api: Api; queue: string }) {
+  const completed = usePolling<{ data: number[]; count: number }>(() => api.metrics(queue, 'completed'), 10000, `${queue}:mc`);
+  const failed = usePolling<{ data: number[]; count: number }>(() => api.metrics(queue, 'failed'), 10000, `${queue}:mf`);
+  const sum = (d?: number[]) => (d ? d.slice(-60).reduce((a, b) => a + b, 0) : 0);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+      <div>
+        <Eyebrow>Completed · per minute</Eyebrow>
+        <p style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-caption)', margin: '4px 0' }}>
+          {sum(completed.data?.data)} in the last hour · {completed.data?.count ?? 0} total
+        </p>
+        <Sparkline data={completed.data?.data ?? []} color="var(--status-success)" />
+      </div>
+      <div>
+        <Eyebrow>Failed · per minute</Eyebrow>
+        <p style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-caption)', margin: '4px 0' }}>
+          {sum(failed.data?.data)} in the last hour · {failed.data?.count ?? 0} total
+        </p>
+        <Sparkline data={failed.data?.data ?? []} color="var(--status-error)" />
+      </div>
+      {completed.data && completed.data.data.length === 0 ? (
+        <p style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-caption)' }}>
+          Enable BullMQ worker metrics to populate these series.
+        </p>
+      ) : null}
     </div>
   );
 }

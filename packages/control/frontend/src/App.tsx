@@ -36,6 +36,9 @@ function AlertsBanner({ api }: { api: Api }) {
 export function App() {
   const api = useMemo(() => new Api(), []);
   const [token, setToken] = useState('');
+  const [connection, setConnection] = useState('default');
+  const conns = usePolling<{ connections: { id: string }[] }>(() => api.connectionList(), 30000, 'conns');
+  const connectionIds = conns.data?.connections.map((c) => c.id) ?? ['default'];
 
   return (
     <main style={{ minHeight: '100vh', padding: 'var(--space-6)', maxWidth: 1200, margin: '0 auto' }}>
@@ -54,6 +57,33 @@ export function App() {
             Queues
           </h1>
         </div>
+        {connectionIds.length > 1 ? (
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>connection</span>
+            <select
+              value={connection}
+              onChange={(e) => {
+                api.setConnection(e.target.value);
+                setConnection(e.target.value);
+              }}
+              style={{
+                font: 'inherit',
+                fontSize: 'var(--text-label)',
+                padding: '6px 10px',
+                borderRadius: 'var(--radius-md)',
+                border: 'var(--border-hairline) solid var(--glass-border, rgba(255,255,255,0.16))',
+                background: 'var(--surface-bg)',
+                color: 'var(--text-primary)',
+              }}
+            >
+              {connectionIds.map((id) => (
+                <option key={id} value={id}>
+                  {id}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
         <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>token</span>
           <input
@@ -79,7 +109,7 @@ export function App() {
       </header>
 
       <AlertsBanner api={api} />
-      <Dashboard api={api} />
+      <Dashboard api={api} key={connection} />
 
       <footer style={{ marginTop: 'var(--space-6)', textAlign: 'center' }}>
         <Eyebrow>Matador · open source observability + ops for BullMQ</Eyebrow>

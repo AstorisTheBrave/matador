@@ -4,10 +4,10 @@ import { usePolling } from './useSnapshot.js';
 import type { QueueDetail, QueuesPage } from './types.js';
 import { STATE_ORDER } from './types.js';
 import { Button, Eyebrow, Mono, StatePill } from './ui.js';
-import { JobsPanel, WorkersPanel, DlqPanel } from './panels.js';
+import { JobsPanel, WorkersPanel, DlqPanel, MetricsPanel } from './panels.js';
 
-type Tab = 'overview' | 'jobs' | 'workers' | 'dlq';
-const TABS: Tab[] = ['overview', 'jobs', 'workers', 'dlq'];
+type Tab = 'overview' | 'jobs' | 'metrics' | 'workers' | 'dlq';
+const TABS: Tab[] = ['overview', 'jobs', 'metrics', 'workers', 'dlq'];
 
 function backlog(c: QueueDetail['counts']): number {
   return c.waiting + c.delayed + c.prioritized;
@@ -182,6 +182,8 @@ function QueueDetailView({
           </p>
         ) : tab === 'jobs' ? (
           <JobsPanel api={api} queue={name} />
+        ) : tab === 'metrics' ? (
+          <MetricsPanel api={api} queue={name} />
         ) : tab === 'workers' ? (
           <WorkersPanel api={api} queue={name} />
         ) : (

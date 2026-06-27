@@ -22,6 +22,8 @@ export class ApiError extends Error {
  * (never persisted) and sent as a bearer header.
  */
 export class Api {
+  private connection: string | undefined = undefined;
+
   constructor(
     private readonly base = '',
     private token: string | undefined = undefined,
@@ -31,11 +33,21 @@ export class Api {
     this.token = token && token.length > 0 ? token : undefined;
   }
 
+  setConnection(id: string | undefined): void {
+    this.connection = id && id !== 'default' ? id : undefined;
+  }
+
+  private withConn(path: string): string {
+    if (!this.connection || path.startsWith('/api/connections')) return path;
+    const sep = path.includes('?') ? '&' : '?';
+    return `${path}${sep}connection=${encodeURIComponent(this.connection)}`;
+  }
+
   private async req<T>(path: string, init?: RequestInit): Promise<T> {
     const headers = new Headers(init?.headers);
     if (this.token) headers.set('Authorization', `Bearer ${this.token}`);
     headers.set('Accept', 'application/json');
-    const res = await fetch(`${this.base}${path}`, { ...init, headers });
+    const res = await fetch(`${this.base}${this.withConn(path)}`, { ...init, headers });
     if (!res.ok) {
       throw new ApiError(res.status, `Request failed (${res.status})`);
     }
@@ -109,5 +121,13 @@ export class Api {
 
   monitors(): Promise<{ config: Record<string, unknown>; active: Alert[] }> {
     return this.req('/api/monitors');
+  }
+
+  jobTree(name: string, id: string): Promise<{ id: string; name: string; parent?: { id: string }; children: { processed: number; unprocessed: number } }> {
+    return this.req(`/api/queues/${encodeURIComponent(name)}/jobs/${encodeURIComponent(id)}/tree`);
+  }
+
+  connectionList(): Promise<{ connections: { id: string; redisUrl: string; isDefault: boolean }[] }> {
+    return this.req('/api/connections');
   }
 }
