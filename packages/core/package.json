@@ -41,7 +41,7 @@
     "ioredis": ">=5"
   },
   "devDependencies": {
-    "@types/node": "^26.0.0",
+    "@types/node": "^26.0.1",
     "bullmq": "^5.34.0",
     "ioredis": "^5.4.0"
   }
