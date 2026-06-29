@@ -50,8 +50,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/prometheus
       bullmq:
-        specifier: ^5.34.0
-        version: 5.79.1
+        specifier: ^5.79.2
+        version: 5.79.2
       fastify:
         specifier: ^5.1.0
         version: 5.8.5
@@ -72,8 +72,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/prometheus
       bullmq:
-        specifier: ^5.34.0
-        version: 5.79.1
+        specifier: ^5.79.2
+        version: 5.79.2
       fastify:
         specifier: ^5.1.0
         version: 5.8.5
@@ -104,8 +104,8 @@ importers:
         specifier: workspace:^
         version: link:../core
       bullmq:
-        specifier: ^5.34.0
-        version: 5.79.1
+        specifier: ^5.79.2
+        version: 5.79.2
       fastify:
         specifier: ^5.1.0
         version: 5.8.5
@@ -154,8 +154,8 @@ importers:
         specifier: ^26.0.0
         version: 26.0.0
       bullmq:
-        specifier: ^5.34.0
-        version: 5.79.1
+        specifier: ^5.79.2
+        version: 5.79.2
       ioredis:
         specifier: ^5.11.0
         version: 5.11.1
@@ -195,8 +195,8 @@ importers:
         specifier: ^26.0.0
         version: 26.0.0
       bullmq:
-        specifier: ^5.34.0
-        version: 5.79.1
+        specifier: ^5.79.2
+        version: 5.79.2
       fastify:
         specifier: ^5.1.0
         version: 5.8.5
@@ -1089,8 +1089,8 @@ packages:
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
     hasBin: true
 
-  bullmq@5.79.1:
-    resolution: {integrity: sha512-cteoHRr1FGOTUgzFrnMyBNGtQhNeVR8Ej6nImNSHQDJi4tj6GMD0p9ZG65ZsTnvR9RVf18dhRxWu4kFl634QGA==}
+  bullmq@5.79.2:
+    resolution: {integrity: sha512-FebD+8XCZl/hnS1R4to24L4EAN70XSndKZO0776M36vGRk5MKVhKlNFM8/34zXLXKyYB4QaeIPFhVXSYYGTHpQ==}
     engines: {node: '>=12.22.0'}
     peerDependencies:
       redis: '>=5.0.0'
@@ -1589,8 +1589,8 @@ packages:
     resolution: {integrity: sha512-4kmO/MdyUIkLIvTPr8VHLil4AtoKIoniWPIEk5+CDy0xnWC84azhSFmuJ7PxZdsYtiP5kEeQsORAVIeMgxT+Hw==}
     hasBin: true
 
-  msgpackr@2.0.2:
-    resolution: {integrity: sha512-c5hYOXFbP79Slh6Dzd2wzk+jnV7mX1UxfMYtilnY1NmalXPqG8DGb5cYCMBrW4AsH3zekBBZd4QrKz9NhtvYLQ==}
+  msgpackr@2.0.4:
+    resolution: {integrity: sha512-o1C5KRmuRt+apqMr1HuGSqWStZoRBUpEsCsl15uM9VdAF1qHLtvMOU2En747EnTyEl6c4pzPewRMFF31s1CNbA==}
 
   mz@2.7.0:
     resolution: {integrity: sha512-z81GNO7nnYMEhrGh9LeymoE4+Yr0Wn5McHIZMK5cfQCl+NDX08sCZgUc9/6MHni9IWuFLm1Z3HTCXu2z9fN62Q==}
@@ -1849,11 +1849,6 @@ packages:
 
   semver@6.3.1:
     resolution: {integrity: sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==}
-    hasBin: true
-
-  semver@7.8.1:
-    resolution: {integrity: sha512-rkVq3IXh+4FDGch+KwzX3aV9W3kO54GyEgpvBzSyctDA6Xtd7RJQV1xmXbeQp5v7+VzLOfVqiutSE6GICgPFvg==}
-    engines: {node: '>=10'}
     hasBin: true
 
   semver@7.8.5:
@@ -3091,13 +3086,13 @@ snapshots:
       node-releases: 2.0.48
       update-browserslist-db: 1.2.3(browserslist@4.28.4)
 
-  bullmq@5.79.1:
+  bullmq@5.79.2:
     dependencies:
       cron-parser: 4.9.0
       ioredis: 5.11.1
-      msgpackr: 2.0.2
+      msgpackr: 2.0.4
       node-abort-controller: 3.1.1
-      semver: 7.8.1
+      semver: 7.8.5
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
@@ -3610,7 +3605,7 @@ snapshots:
       '@msgpackr-extract/msgpackr-extract-win32-x64': 3.0.4
     optional: true
 
-  msgpackr@2.0.2:
+  msgpackr@2.0.4:
     optionalDependencies:
       msgpackr-extract: 3.0.4
 
@@ -3843,8 +3838,6 @@ snapshots:
   secure-json-parse@4.1.0: {}
 
   semver@6.3.1: {}
-
-  semver@7.8.1: {}
 
   semver@7.8.5: {}
 
